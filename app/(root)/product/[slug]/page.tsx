@@ -49,7 +49,7 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
             <Card>
               <CardContent className='p-4'>
                 <div className='mb-2 flex justify-between'>
-                  <div>Price</div>
+                  <div>Price gg</div>
                   <div>
                     <ProductPrice value={Number(product.price)} />
                   </div>
