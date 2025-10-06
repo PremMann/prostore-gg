@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
-// import UserButton from './user-button';
+import UserButton from './user-button';
 
 const Menu = () => {
   return (
@@ -21,11 +21,12 @@ const Menu = () => {
                 <ShoppingCart /> Cart
                 </Link>
             </Button>
-            <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
+            <UserButton />
+            {/* <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
                 <Link href='/sign-in'>
                 <UserIcon /> Sign In
                 </Link>
-            </Button>
+            </Button> */}
       </nav>
       <nav className='md:hidden'>
         <Sheet>
@@ -40,12 +41,12 @@ const Menu = () => {
                 <ShoppingCart /> Cart
               </Link>
             </Button>
-            {/* <UserButton /> */}
-            <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
+            <UserButton />
+            {/* <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
               <Link href='/sign-in'>
                 <UserIcon /> Sign In
               </Link>
-            </Button>
+            </Button> */}
             <SheetDescription></SheetDescription>
           </SheetContent>
         </Sheet>
