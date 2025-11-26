@@ -7,15 +7,15 @@ import ws from 'ws';
 neonConfig.webSocketConstructor = ws;
 const connectionString = `${process.env.DATABASE_URL}`;
 
-// Creates a new connection pool using the provided connection string
-const pool = new Pool({ connectionString });
-
-// Instantiates the Prisma adapter using the pool
-// const adapter = new PrismaNeon(pool);
-const adapter = new PrismaNeon({ connectionString })
-
-// Extends the PrismaClient with a custom result transformer to convert the price and rating fields to strings.
-export const prisma = new PrismaClient({ adapter }).$extends({
+export const prisma = (() => {
+  if (process.env.NODE_ENV === 'production') {
+    const pool = new Pool({ connectionString });
+    const adapter = new PrismaNeon(pool as any);
+    return new PrismaClient({ adapter });
+  } else {
+    return new PrismaClient();
+  }
+})().$extends({
   result: {
     product: {
       price: {
@@ -31,3 +31,4 @@ export const prisma = new PrismaClient({ adapter }).$extends({
     },
   },
 });
+
