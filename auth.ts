@@ -1,24 +1,14 @@
 import NextAuth from 'next-auth';
-// import { authConfig } from './auth.config';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/db/prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { compareSync } from 'bcrypt-ts-edge';
-import type { NextAuthConfig } from 'next-auth';
-import { cookies } from 'next/headers';
-import { NextResponse } from 'next/server';
+import { authConfig } from './auth.config';
 
 export const config = {
-      pages: {
-    signIn: '/sign-in',
-    error: '/sign-in',
-  },
-  session: {
-    strategy: 'jwt' as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
-    adapter: PrismaAdapter(prisma),
-    providers: [
+  ...authConfig,
+  adapter: PrismaAdapter(prisma),
+  providers: [
     CredentialsProvider({
       credentials: {
         email: { type: 'email' },
@@ -34,79 +24,44 @@ export const config = {
           },
         });
         if (user && user.password) {
-            const isMatch = compareSync(credentials.password as string, user.password);
+          const isMatch = compareSync(credentials.password as string, user.password);
 
-            // If password is correct, return user
-            if (isMatch) {
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                }
-            }  
+          // If password is correct, return user
+          if (isMatch) {
+            return {
+              id: user.id,
+              email: user.email,
+              name: user.name,
+              role: user.role,
+            }
+          }
         }
         // If user does not exist or password does not match return null
         return null;
       }
-    })],
-    callbacks: {
-    async session({ session, user, trigger, token }: any) {
-        // Set the user ID from the token
-        session.user.id = token.sub;
-        session.user.role = token.role;
-        session.user.name = token.name;
-
-        // If there is an update, set the user name
-        if (trigger === 'update') {
-            session.user.name = token.name;
-        }
-
-        return session;
-    },
+    })
+  ],
+  callbacks: {
+    ...authConfig.callbacks,
     async jwt({ token, user, trigger, session }: any) {
 
-        // Assign user fields to token 
-        if (user) {
-          token.role = user.role;
+      // Assign user fields to token 
+      if (user) {
+        token.role = user.role;
 
-          // If user has no name, set it to email
-          if (user.name == 'NO_NAME') {
-            token.name = user.email?.split('@')[0];
-         
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { name: token.name },
-            });
-          }
+        // If user has no name, set it to email
+        if (user.name == 'NO_NAME') {
+          token.name = user.email?.split('@')[0];
+
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { name: token.name },
+          });
         }
-        return token;
-    },
-    authorized({ request, auth } : any) {
-      // Check for session cart cookie
-      if (!request.cookies.get('sessionCartId')) {
-        // Generate new session cart id cookie
-        const sessionCartID = crypto.randomUUID();
-
-        // clone the req headers
-        const newRequestHeaders = new Headers(request.headers);
-
-        // Create new response and add the new headers
-        const response = NextResponse.next({
-          request: {
-            headers: newRequestHeaders,
-          },
-        });
-
-        // Set newly generated sessionCartId in the response cookies
-        response.cookies.set('sessionCartId', sessionCartID);
-        return response;
-      } else {
-        return true;
       }
-      
-    }
-},
-} satisfies NextAuthConfig;
+      return token;
+    },
+  },
+};
 
 export const { handlers, auth, signIn, signOut } = NextAuth(config);
