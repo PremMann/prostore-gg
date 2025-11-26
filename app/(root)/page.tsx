@@ -1,4 +1,6 @@
 
+export const runtime = "nodejs";
+
 import ProductList from "@/components/ui/shared/product/product-list";
 import { getLatestProducts } from "@/lib/actions/product.actions";
 const Homepage = async () => {
