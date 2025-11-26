@@ -16,7 +16,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      POSTGRES_URL: ${POSTGRES_URL}
+      POSTGRES_URL: ${DATABASE_URL}
     volumes:
       - .:/app
       - node_modules:/app/node_modules
