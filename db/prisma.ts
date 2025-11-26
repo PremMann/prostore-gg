@@ -5,6 +5,10 @@ import ws from 'ws';
 
 // Sets up WebSocket connections, which enables Neon to use WebSocket communication.
 neonConfig.webSocketConstructor = ws;
+
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL is not defined');
+}
 const connectionString = `${process.env.DATABASE_URL}`;
 
 export const prisma = (() => {
