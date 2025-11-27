@@ -46,6 +46,20 @@ export const authConfig = {
                 response.cookies.set('sessionCartId', sessionCartID);
                 return response;
             } else {
+                const { nextUrl } = request;
+                const isLoggedIn = !!auth?.user;
+                const isOnAdmin = nextUrl.pathname.startsWith('/admin');
+                const isOnAdminDashboard = nextUrl.pathname.startsWith('/admin/dashboard');
+
+                if (isOnAdmin) {
+                    if (isLoggedIn) {
+                        if (auth.user.role !== 'admin') {
+                            return Response.redirect(new URL('/', nextUrl));
+                        }
+                        return true;
+                    }
+                    return false; // Redirect unauthenticated users to login page
+                }
                 return true;
             }
 

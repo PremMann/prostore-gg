@@ -11,12 +11,15 @@ import {
     Sun,
     Moon,
     MoreVertical,
-    Plus,
     Trash2,
     Edit,
     Ban,
     AlertTriangle,
     TrendingUp,
+    ArrowUp,
+    ArrowDown,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,13 +35,6 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 
 // --- Mock Data ---
 
@@ -85,39 +81,134 @@ interface User {
     id: string;
     name: string;
     email: string;
-    role: "Admin" | "User";
-    status: "Active" | "Suspended";
+    role: string;
+    image: string | null;
+    createdAt: Date;
+    phoneNumber: string | null;
+    emailVerified: Date | null;
 }
 
-const INITIAL_USERS: User[] = [
-    { id: "U-001", name: "John Doe", email: "john@example.com", role: "Admin", status: "Active" },
-    { id: "U-002", name: "Jane Smith", email: "jane@example.com", role: "User", status: "Active" },
-    { id: "U-003", name: "Robert Johnson", email: "robert@example.com", role: "User", status: "Suspended" },
-    { id: "U-004", name: "Emily Davis", email: "emily@example.com", role: "User", status: "Active" },
-    { id: "U-005", name: "Michael Wilson", email: "michael@example.com", role: "Admin", status: "Active" },
-];
+interface Product {
+    id: string;
+    name: string;
+    slug: string;
+    category: string;
+    price: string; // Decimal is returned as string/number usually, check convertToPlainObject
+    stock: number;
+    rating: string;
+    createdAt: Date;
+    images: string[];
+}
 
 // --- Main Admin Dashboard Component ---
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "products">("dashboard");
     const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
-    const [users, setUsers] = useState<User[]>(INITIAL_USERS);
+    const [users, setUsers] = useState<User[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
-    // Form State
-    const [newUser, setNewUser] = useState({
-        name: "",
-        email: "",
-        role: "User",
-        status: "Active",
-    });
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalUsers, setTotalUsers] = useState(0);
+
+    // Filter and sort state
+    const [roleFilter, setRoleFilter] = useState<string>("");
+    const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'role'>('createdAt');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    // Product State
+    const [products, setProducts] = useState<Product[]>([]);
+    const [productPage, setProductPage] = useState(1);
+    const [productTotalPages, setProductTotalPages] = useState(1);
+    const [productTotalCount, setProductTotalCount] = useState(0);
+    const [productSearch, setProductSearch] = useState("");
+    const [categoryFilter, setCategoryFilter] = useState("");
+    const [productSortBy, setProductSortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
+    const [productSortOrder, setProductSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [categories, setCategories] = useState<string[]>([]);
 
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
     };
+
+    // Fetch users when users tab is active or when filters/pagination change
+    useEffect(() => {
+        const fetchUsers = async () => {
+            if (activeTab === "users") {
+                setIsLoading(true);
+                try {
+                    const { getAllUsers } = await import("@/lib/actions/user.actions");
+                    const result = await getAllUsers({
+                        page,
+                        limit,
+                        search: searchQuery,
+                        role: roleFilter || undefined,
+                        sortBy,
+                        sortOrder,
+                    });
+                    if (result.success && result.data) {
+                        setUsers(result.data.users);
+                        setTotalPages(result.data.pagination.totalPages);
+                        setTotalUsers(result.data.pagination.total);
+                    } else {
+                        toast.error(result.message || "Failed to fetch users");
+                    }
+                } catch {
+                    toast.error("Failed to fetch users");
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        fetchUsers();
+    }, [activeTab, page, limit, searchQuery, roleFilter, sortBy, sortOrder]);
+
+    // Fetch products
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (activeTab === "products") {
+                setIsLoading(true);
+                try {
+                    const { getAllProducts, getAllCategories } = await import("@/lib/actions/product.actions");
+
+                    // Fetch categories if not already loaded
+                    if (categories.length === 0) {
+                        const catResult = await getAllCategories();
+                        if (catResult.success && catResult.data) {
+                            setCategories(catResult.data as string[]);
+                        }
+                    }
+
+                    const result = await getAllProducts({
+                        page: productPage,
+                        limit, // Reuse same limit
+                        search: productSearch,
+                        category: categoryFilter || undefined,
+                        sortBy: productSortBy,
+                        sortOrder: productSortOrder,
+                    });
+
+                    if (result.success && result.data) {
+                        setProducts(result.data.products as unknown as Product[]);
+                        setProductTotalPages(result.data.pagination.totalPages);
+                        setProductTotalCount(result.data.pagination.total);
+                    } else {
+                        toast.error(result.message || "Failed to fetch products");
+                    }
+                } catch {
+                    toast.error("Failed to fetch products");
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+        fetchProducts();
+    }, [activeTab, productPage, limit, productSearch, categoryFilter, productSortBy, productSortOrder, categories.length]);
 
     // Sync dark mode with HTML element
     useEffect(() => {
@@ -129,35 +220,6 @@ export default function AdminDashboard() {
     }, [isDarkMode]);
 
     // Filter Users
-    const filteredUsers = users.filter(
-        (user) =>
-            user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    // Handle Create User
-    const handleCreateUser = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Simple validation
-        if (!newUser.name || !newUser.email) {
-            toast.error("Please fill in all required fields");
-            return;
-        }
-
-        const user: User = {
-            id: `U-${Math.floor(Math.random() * 1000)}`,
-            name: newUser.name,
-            email: newUser.email,
-            role: newUser.role as "Admin" | "User",
-            status: newUser.status as "Active" | "Suspended",
-        };
-
-        setUsers([user, ...users]);
-        setIsCreateDialogOpen(false);
-        setNewUser({ name: "", email: "", role: "User", status: "Active" });
-        toast.success("User created successfully");
-    };
-
     const handleDeleteUser = (id: string) => {
         setUsers(users.filter((u) => u.id !== id));
         toast.success("User deleted successfully");
@@ -353,152 +415,162 @@ export default function AdminDashboard() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Users Management</CardTitle>
-                                <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Create User
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Create New User</DialogTitle>
-                                        </DialogHeader>
-                                        <form onSubmit={handleCreateUser} className="grid gap-4 py-4">
-                                            <div className="grid gap-2">
-                                                <label htmlFor="name" className="text-sm font-medium">
-                                                    Name
-                                                </label>
-                                                <Input
-                                                    id="name"
-                                                    value={newUser.name}
-                                                    onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                                    placeholder="John Doe"
-                                                />
-                                            </div>
-                                            <div className="grid gap-2">
-                                                <label htmlFor="email" className="text-sm font-medium">
-                                                    Email
-                                                </label>
-                                                <Input
-                                                    id="email"
-                                                    type="email"
-                                                    value={newUser.email}
-                                                    onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                                    placeholder="john@example.com"
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="grid gap-2">
-                                                    <label htmlFor="role" className="text-sm font-medium">
-                                                        Role
-                                                    </label>
-                                                    <select
-                                                        id="role"
-                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                        value={newUser.role}
-                                                        onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-                                                    >
-                                                        <option value="User">User</option>
-                                                        <option value="Admin">Admin</option>
-                                                    </select>
-                                                </div>
-                                                <div className="grid gap-2">
-                                                    <label htmlFor="status" className="text-sm font-medium">
-                                                        Status
-                                                    </label>
-                                                    <select
-                                                        id="status"
-                                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                                        value={newUser.status}
-                                                        onChange={(e) => setNewUser({ ...newUser, status: e.target.value })}
-                                                    >
-                                                        <option value="Active">Active</option>
-                                                        <option value="Suspended">Suspended</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="flex justify-end gap-2 mt-4">
-                                                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                                                    Cancel
-                                                </Button>
-                                                <Button type="submit">Create User</Button>
-                                            </div>
-                                        </form>
-                                    </DialogContent>
-                                </Dialog>
                             </CardHeader>
                             <CardContent>
-                                <div className="mb-4">
-                                    <Input
-                                        placeholder="Search users..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="max-w-sm"
-                                    />
+                                {/* Filter Controls */}
+                                <div className="flex flex-wrap gap-4 mb-4">
+                                    {/* Search */}
+                                    <div className="relative flex-1 min-w-[200px]">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search users..."
+                                            value={searchQuery}
+                                            onChange={(e) => {
+                                                setSearchQuery(e.target.value);
+                                                setPage(1); // Reset to first page on search
+                                            }}
+                                            className="pl-8"
+                                        />
+                                    </div>
+
+                                    {/* Role Filter */}
+                                    <select
+                                        value={roleFilter}
+                                        onChange={(e) => {
+                                            setRoleFilter(e.target.value);
+                                            setPage(1);
+                                        }}
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        <option value="">All Roles</option>
+                                        <option value="admin">Admin</option>
+                                        <option value="user">User</option>
+                                    </select>
+
+                                    {/* Sort By */}
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value as 'name' | 'email' | 'createdAt' | 'role')}
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        <option value="createdAt">Sort by: Created Date</option>
+                                        <option value="name">Sort by: Name</option>
+                                        <option value="email">Sort by: Email</option>
+                                        <option value="role">Sort by: Role</option>
+                                    </select>
+
+                                    {/* Sort Order Toggle */}
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setSortOrder(order => order === 'asc' ? 'desc' : 'asc')}
+                                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                                    >
+                                        {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                                    </Button>
                                 </div>
+
                                 <div className="rounded-md border">
                                     <div className="relative w-full overflow-auto">
                                         <table className="w-full caption-bottom text-sm">
                                             <thead className="[&_tr]:border-b">
                                                 <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">ID</th>
                                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
                                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Email</th>
                                                     <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Role</th>
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Phone</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Created Date</th>
                                                     <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="[&_tr:last-child]:border-0">
-                                                {filteredUsers.map((user) => (
-                                                    <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
-                                                        <td className="p-4 align-middle font-medium">{user.id}</td>
-                                                        <td className="p-4 align-middle">{user.name}</td>
-                                                        <td className="p-4 align-middle">{user.email}</td>
-                                                        <td className="p-4 align-middle">
-                                                            <span className={cn(
-                                                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                                                                user.role === "Admin" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
-                                                            )}>
-                                                                {user.role}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-4 align-middle">
-                                                            <span className={cn(
-                                                                "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors",
-                                                                user.status === "Active" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                                                            )}>
-                                                                {user.status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-4 align-middle text-right">
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger asChild>
-                                                                    <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                        <span className="sr-only">Open menu</span>
-                                                                        <MoreVertical className="h-4 w-4" />
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent align="end">
-                                                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                    <DropdownMenuItem>
-                                                                        <Edit className="mr-2 h-4 w-4" /> Edit
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem>
-                                                                        <Ban className="mr-2 h-4 w-4" /> Suspend
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuSeparator />
-                                                                    <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteUser(user.id)}>
-                                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
+                                                {isLoading ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                                            Loading users...
                                                         </td>
                                                     </tr>
-                                                ))}
+                                                ) : users.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                                            No users found
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    users.map((user) => (
+                                                        <tr key={user.id} className="border-b transition-colors hover:bg-muted/50">
+                                                            <td className="p-4 align-middle">{user.name}</td>
+                                                            <td className="p-4 align-middle">{user.email}</td>
+                                                            <td className="p-4 align-middle">
+                                                                <span className={cn(
+                                                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                                                                    user.role === "admin" ? "bg-primary/10 text-primary" : "bg-secondary text-secondary-foreground"
+                                                                )}>
+                                                                    {user.role}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 align-middle">{user.phoneNumber || "N/A"}</td>
+                                                            <td className="p-4 align-middle">
+                                                                {new Date(user.createdAt).toLocaleDateString()}
+                                                            </td>
+                                                            <td className="p-4 align-middle text-right">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                            <span className="sr-only">Open menu</span>
+                                                                            <MoreVertical className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                        <DropdownMenuItem>
+                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem>
+                                                                            <Ban className="mr-2 h-4 w-4" /> Suspend
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteUser(user.id)}>
+                                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+
+                                {/* Pagination Controls */}
+                                <div className="flex items-center justify-between px-2 py-4">
+                                    <div className="text-sm text-muted-foreground">
+                                        Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalUsers)} of {totalUsers} users
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                                            disabled={page === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-1" />
+                                            Previous
+                                        </Button>
+                                        <div className="text-sm font-medium">
+                                            Page {page} of {totalPages}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                            disabled={page === totalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
                                     </div>
                                 </div>
                             </CardContent>
@@ -506,20 +578,171 @@ export default function AdminDashboard() {
                     )}
 
                     {activeTab === "products" && (
-                        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm">
-                            <div className="flex flex-col items-center gap-1 text-center">
-                                <h3 className="text-2xl font-bold tracking-tight">
-                                    No products added
-                                </h3>
-                                <p className="text-sm text-muted-foreground">
-                                    You can start selling as soon as you add a product.
-                                </p>
-                                <Button className="mt-4">Add Product</Button>
-                            </div>
-                        </div>
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <CardTitle>Products Management</CardTitle>
+                                <Button>
+                                    <Package className="mr-2 h-4 w-4" />
+                                    Add Product
+                                </Button>
+                            </CardHeader>
+                            <CardContent>
+                                {/* Filter Controls */}
+                                <div className="flex flex-wrap gap-4 mb-4">
+                                    {/* Search */}
+                                    <div className="relative flex-1 min-w-[200px]">
+                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            placeholder="Search products..."
+                                            value={productSearch}
+                                            onChange={(e) => {
+                                                setProductSearch(e.target.value);
+                                                setProductPage(1);
+                                            }}
+                                            className="pl-8"
+                                        />
+                                    </div>
+
+                                    {/* Category Filter */}
+                                    <select
+                                        value={categoryFilter}
+                                        onChange={(e) => {
+                                            setCategoryFilter(e.target.value);
+                                            setProductPage(1);
+                                        }}
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        <option value="">All Categories</option>
+                                        {categories.map((category) => (
+                                            <option key={category} value={category}>
+                                                {category}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    {/* Sort By */}
+                                    <select
+                                        value={productSortBy}
+                                        onChange={(e) => setProductSortBy(e.target.value as 'name' | 'price' | 'rating' | 'createdAt')}
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    >
+                                        <option value="createdAt">Sort by: Created Date</option>
+                                        <option value="name">Sort by: Name</option>
+                                        <option value="price">Sort by: Price</option>
+                                        <option value="rating">Sort by: Rating</option>
+                                    </select>
+
+                                    {/* Sort Order Toggle */}
+                                    <Button
+                                        variant="outline"
+                                        size="icon"
+                                        onClick={() => setProductSortOrder(order => order === 'asc' ? 'desc' : 'asc')}
+                                        title={productSortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                                    >
+                                        {productSortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                                    </Button>
+                                </div>
+
+                                <div className="rounded-md border">
+                                    <div className="relative w-full overflow-auto">
+                                        <table className="w-full caption-bottom text-sm">
+                                            <thead className="[&_tr]:border-b">
+                                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Category</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Price</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Stock</th>
+                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Rating</th>
+                                                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="[&_tr:last-child]:border-0">
+                                                {isLoading ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                                            Loading products...
+                                                        </td>
+                                                    </tr>
+                                                ) : products.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
+                                                            No products found
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    products.map((product) => (
+                                                        <tr key={product.id} className="border-b transition-colors hover:bg-muted/50">
+                                                            <td className="p-4 align-middle font-medium">{product.name}</td>
+                                                            <td className="p-4 align-middle">
+                                                                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground">
+                                                                    {product.category}
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-4 align-middle">${product.price}</td>
+                                                            <td className="p-4 align-middle">{product.stock}</td>
+                                                            <td className="p-4 align-middle">{product.rating}</td>
+                                                            <td className="p-4 align-middle text-right">
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                                                            <span className="sr-only">Open menu</span>
+                                                                            <MoreVertical className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end">
+                                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                                        <DropdownMenuItem>
+                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuSeparator />
+                                                                        <DropdownMenuItem className="text-red-600">
+                                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                {/* Pagination Controls */}
+                                <div className="flex items-center justify-between px-2 py-4">
+                                    <div className="text-sm text-muted-foreground">
+                                        Showing {((productPage - 1) * limit) + 1} to {Math.min(productPage * limit, productTotalCount)} of {productTotalCount} products
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setProductPage(p => Math.max(1, p - 1))}
+                                            disabled={productPage === 1}
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-1" />
+                                            Previous
+                                        </Button>
+                                        <div className="text-sm font-medium">
+                                            Page {productPage} of {productTotalPages}
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setProductPage(p => Math.min(productTotalPages, p + 1))}
+                                            disabled={productPage === productTotalPages}
+                                        >
+                                            Next
+                                            <ChevronRight className="h-4 w-4 ml-1" />
+                                        </Button>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
                     )}
                 </main>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }
