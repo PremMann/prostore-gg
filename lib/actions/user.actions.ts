@@ -46,7 +46,7 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
 
     const plainPassword = user.password;
 
-    user.password =  hashSync(user.password);
+    user.password = hashSync(user.password);
 
     await prisma.user.create({
       data: {
@@ -66,6 +66,98 @@ export async function signUpUser(prevState: unknown, formData: FormData) {
     if (isRedirectError(error)) {
       throw error;
     }
+    return { success: false, message: formatError(error) };
+  }
+}
+
+// Get all users for admin dashboard with pagination, search, and filtering
+interface GetUsersParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  role?: string;
+  sortBy?: 'name' | 'email' | 'createdAt' | 'role';
+  sortOrder?: 'asc' | 'desc';
+}
+
+interface PaginationInfo {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function getAllUsers(params: GetUsersParams = {}) {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      search = '',
+      role,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = params;
+
+    const skip = (page - 1) * limit;
+
+    // Build where clause for filtering
+    const whereConditions: object[] = [];
+
+    // Search filter (name or email)
+    if (search) {
+      whereConditions.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    // Role filter
+    if (role) {
+      whereConditions.push({ role });
+    }
+
+    const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
+
+    // Get total count for pagination
+    const totalCount = await prisma.user.count({ where });
+
+    // Fetch users with filters and pagination
+    const users = await prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        image: true,
+        createdAt: true,
+        phoneNumber: true,
+        emailVerified: true,
+      },
+      orderBy: {
+        [sortBy]: sortOrder,
+      },
+      skip,
+      take: limit,
+    });
+
+    const pagination: PaginationInfo = {
+      total: totalCount,
+      page,
+      limit,
+      totalPages: Math.ceil(totalCount / limit),
+    };
+
+    return {
+      success: true,
+      data: {
+        users,
+        pagination,
+      },
+    };
+  } catch (error) {
     return { success: false, message: formatError(error) };
   }
 }
