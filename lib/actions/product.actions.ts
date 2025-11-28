@@ -2,6 +2,9 @@
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject, formatError } from "../utils";
 import { LATEST_PRODUCTS_LIMIT } from "../constants";
+import { insertProductSchema } from "../validators";
+import { z } from "zod";
+import { revalidatePath } from "next/cache";
 
 // Get latest products
 export async function getLatestProducts() {
@@ -113,6 +116,32 @@ export async function getAllCategories() {
             distinct: ['category'],
         });
         return { success: true, data: categories.map(c => c.category) };
+    } catch (error) {
+        return { success: false, message: formatError(error) };
+    }
+}
+
+// Create a new product
+export async function createProduct(data: z.infer<typeof insertProductSchema>) {
+    try {
+        const product = insertProductSchema.parse(data);
+
+        // Check if slug already exists
+        const existingProduct = await prisma.product.findUnique({
+            where: { slug: product.slug }
+        });
+
+        if (existingProduct) {
+            return { success: false, message: "Product with this slug already exists" };
+        }
+
+        await prisma.product.create({
+            data: product
+        });
+
+        revalidatePath("/admin/dashboard");
+
+        return { success: true, message: "Product created successfully" };
     } catch (error) {
         return { success: false, message: formatError(error) };
     }

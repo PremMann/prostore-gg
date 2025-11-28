@@ -35,6 +35,15 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import ProductForm from "./product-form";
 
 // --- Mock Data ---
 
@@ -130,6 +139,7 @@ export default function AdminDashboard() {
     const [productSortBy, setProductSortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
     const [productSortOrder, setProductSortOrder] = useState<'asc' | 'desc'>('desc');
     const [categories, setCategories] = useState<string[]>([]);
+    const [isProductModalOpen, setIsProductModalOpen] = useState(false);
 
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
@@ -223,6 +233,34 @@ export default function AdminDashboard() {
     const handleDeleteUser = (id: string) => {
         setUsers(users.filter((u) => u.id !== id));
         toast.success("User deleted successfully");
+    };
+
+    // Refresh products after adding a new product
+    const refreshProducts = async () => {
+        if (activeTab === "products") {
+            setIsLoading(true);
+            try {
+                const { getAllProducts } = await import("@/lib/actions/product.actions");
+                const result = await getAllProducts({
+                    page: productPage,
+                    limit,
+                    search: productSearch,
+                    category: categoryFilter || undefined,
+                    sortBy: productSortBy,
+                    sortOrder: productSortOrder,
+                });
+
+                if (result.success && result.data) {
+                    setProducts(result.data.products as unknown as Product[]);
+                    setProductTotalPages(result.data.pagination.totalPages);
+                    setProductTotalCount(result.data.pagination.total);
+                }
+            } catch {
+                toast.error("Failed to refresh products");
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     // --- Sub-Components ---
@@ -581,10 +619,23 @@ export default function AdminDashboard() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Products Management</CardTitle>
-                                <Button>
-                                    <Package className="mr-2 h-4 w-4" />
-                                    Add Product
-                                </Button>
+                                <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button>
+                                            <Package className="mr-2 h-4 w-4" />
+                                            Add Product
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                        <DialogHeader>
+                                            <DialogTitle>Add New Product</DialogTitle>
+                                            <DialogDescription>
+                                                Fill in the details below to create a new product.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <ProductForm setOpen={setIsProductModalOpen} onSuccess={refreshProducts} />
+                                    </DialogContent>
+                                </Dialog>
                             </CardHeader>
                             <CardContent>
                                 {/* Filter Controls */}
