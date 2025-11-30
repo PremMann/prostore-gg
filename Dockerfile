@@ -9,7 +9,7 @@ WORKDIR /app
 COPY .env .env
 
 # Copy Prisma schema
-COPY prisma ./prisma
+COPY . .
 
 COPY package*.json ./
 RUN npm install
