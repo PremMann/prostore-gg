@@ -1,4 +1,4 @@
-FROM node:18-buster
+FROM node:20-bookworm
 
 # Create app directory
 WORKDIR /app
