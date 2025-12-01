@@ -4,6 +4,7 @@ import { insertProductSchema, insertCartSchema, cartItemSchema } from '@/lib/val
 export type Product = z.infer<typeof insertProductSchema> & {
   id: string;
   rating: string;
+  numReviews: number;
   createdAt: Date;
 };
 

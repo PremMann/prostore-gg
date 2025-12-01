@@ -1,7 +1,17 @@
 import ProductCard from "./product-card";
 import { Product } from '@/types';
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 
-const ProductList = ({ data, title, limit }: { data: Product[]; title?: string; limit?: number }) => {
+interface ProductListProps {
+  data: Product[];
+  title?: string;
+  limit?: number;
+  viewAllLink?: string;
+  viewAllText?: string;
+}
+
+const ProductList = ({ data, title, limit, viewAllLink, viewAllText = "View All" }: ProductListProps) => {
   const limitedData = limit ? data.slice(0, limit) : data;
   return (
     <section id="products" className='py-16 md:py-20'>
@@ -16,11 +26,24 @@ const ProductList = ({ data, title, limit }: { data: Product[]; title?: string; 
         )}
 
         {data.length > 0 ? (
-          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8'>
-            {limitedData.map((product: Product) => (
-              <ProductCard key={product.slug} product={product} />
-            ))}
-          </div>
+          <>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8'>
+              {limitedData.map((product: Product) => (
+                <ProductCard key={product.slug} product={product} />
+              ))}
+            </div>
+            {viewAllLink && (
+              <div className="text-center mt-10">
+                <Link 
+                  href={viewAllLink}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105 group"
+                >
+                  {viewAllText}
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
+            )}
+          </>
         ) : (
           <div className='text-center py-20'>
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-4">
