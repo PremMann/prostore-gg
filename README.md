@@ -15,6 +15,14 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## File uploads on Vercel
+
+This app uses the local filesystem in development, but Vercel's runtime is read-only. In production we use Vercel Blob for persistent uploads. To enable it:
+
+1. In Vercel Project Settings → Environment Variables, add `BLOB_READ_WRITE_TOKEN` (Scope: Production & Preview) from the Blob dashboard.
+2. Redeploy. The API route at `/api/upload` will store files in Blob and return a public URL.
+3. If you change providers, update `app/api/upload/route.ts` and the allowed image hosts in `next.config.ts`.
+
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

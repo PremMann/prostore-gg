@@ -4,11 +4,19 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { createProduct } from "@/lib/actions/product.actions";
 import { toast } from "sonner";
 import { insertProductSchema } from "@/lib/validators";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
+import { PRODUCT_CATEGORIES } from "@/lib/constants";
 
 export default function ProductForm({
     setOpen,
@@ -222,14 +230,23 @@ export default function ProductForm({
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Input
-                        id="category"
-                        name="category"
+                    <Select
                         value={formData.category}
-                        onChange={handleChange}
-                        placeholder="Category"
-                        required
-                    />
+                        onValueChange={(value) =>
+                            setFormData((prev) => ({ ...prev, category: value }))
+                        }
+                    >
+                        <SelectTrigger id="category">
+                            <SelectValue placeholder="Select a category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {PRODUCT_CATEGORIES.map((category) => (
+                                <SelectItem key={category.value} value={category.value}>
+                                    {category.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
                 </div>
                 <div className="space-y-2">
