@@ -17,6 +17,49 @@ export async function getLatestProducts() {
     return convertToPlainObject(data);
 }
 
+// Get featured products (highest rated)
+export async function getFeaturedProducts(limit: number = 4) {
+    const data = await prisma.product.findMany({
+        orderBy: {
+            rating: "desc",
+        },
+        take: limit,
+    });
+    return convertToPlainObject(data);
+}
+
+// Get best sellers (most reviewed products as proxy for sales)
+export async function getBestSellers(limit: number = 4) {
+    const data = await prisma.product.findMany({
+        orderBy: {
+            numReviews: "desc",
+        },
+        take: limit,
+    });
+    return convertToPlainObject(data);
+}
+
+// Get a random deal product (for deal of the day)
+export async function getDealOfTheDay() {
+    const products = await prisma.product.findMany({
+        where: {
+            stock: { gt: 0 },
+        },
+        orderBy: {
+            rating: "desc",
+        },
+        take: 5,
+    });
+    
+    if (products.length === 0) return null;
+    
+    // Pick a "random" product based on the day to keep it consistent for a day
+    const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+    const index = dayOfYear % products.length;
+    
+    return convertToPlainObject(products[index]);
+}
+
 // Get single product by it's slug
 export async function getProductBySlug(slug: string) {
     return await prisma.product.findFirst({
