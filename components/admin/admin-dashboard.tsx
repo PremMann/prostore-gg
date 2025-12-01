@@ -340,7 +340,7 @@ export default function AdminDashboard() {
                     </Sheet>
                     <div className="w-full flex-1">
                         <form>
-                            <div className="relative">
+                            <div className="relative" suppressHydrationWarning>
                                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
                                     type="search"

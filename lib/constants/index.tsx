@@ -12,3 +12,10 @@ export const signUpDefaultValues = {
   password: '',
   confirmPassword: '',
 };
+
+export const PRODUCT_CATEGORIES = [
+  { name: "Men's Clothing", value: 'mens-clothing' },
+  { name: "Women's Clothing", value: 'womens-clothing' },
+  { name: 'Accessories', value: 'accessories' },
+  { name: 'Footwear', value: 'footwear' },
+] as const;
