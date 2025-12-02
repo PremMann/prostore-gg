@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import {
     LayoutDashboard,
     Users,
@@ -20,6 +21,7 @@ import {
     ArrowDown,
     ChevronLeft,
     ChevronRight,
+    Home,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -351,6 +353,11 @@ export default function AdminDashboard() {
                         </form>
                     </div>
                     <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" asChild>
+                            <Link href="/" title="Go to Store" target="_blank" rel="noopener noreferrer">
+                                <Home className="h-5 w-5" />
+                            </Link>
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={toggleTheme}>
                             {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                         </Button>
