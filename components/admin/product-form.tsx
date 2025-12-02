@@ -17,6 +17,7 @@ import { insertProductSchema } from "@/lib/validators";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
+import { TagInput, SIZE_SUGGESTIONS, COLOR_SUGGESTIONS } from "@/components/ui/tag-input";
 
 export default function ProductForm({
     setOpen,
@@ -38,6 +39,8 @@ export default function ProductForm({
         images: [] as string[],
         isFeatured: false,
         banner: "",
+        sizes: [] as string[],
+        colors: [] as string[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -164,6 +167,8 @@ export default function ProductForm({
                 images: formData.images,
                 banner: formData.banner || null,
                 isFeatured: formData.isFeatured,
+                sizes: formData.sizes,
+                colors: formData.colors,
             };
 
             // Client-side validation
@@ -288,6 +293,27 @@ export default function ProductForm({
                         required
                     />
                     {errors.stock && <p className="text-sm text-red-500">{errors.stock}</p>}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label htmlFor="sizes">Sizes</Label>
+                    <TagInput
+                        value={formData.sizes}
+                        onChange={(sizes) => setFormData((prev) => ({ ...prev, sizes }))}
+                        placeholder="Type size and press Enter"
+                        suggestions={SIZE_SUGGESTIONS}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="colors">Colors</Label>
+                    <TagInput
+                        value={formData.colors}
+                        onChange={(colors) => setFormData((prev) => ({ ...prev, colors }))}
+                        placeholder="Type color and press Enter"
+                        suggestions={COLOR_SUGGESTIONS}
+                    />
                 </div>
             </div>
 

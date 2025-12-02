@@ -50,13 +50,13 @@ export async function getDealOfTheDay() {
         },
         take: 5,
     });
-    
+
     if (products.length === 0) return null;
-    
+
     // Pick a "random" product based on the day to keep it consistent for a day
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
     const index = dayOfYear % products.length;
-    
+
     return convertToPlainObject(products[index]);
 }
 
