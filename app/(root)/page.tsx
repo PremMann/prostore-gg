@@ -84,9 +84,9 @@ const Homepage = async () => {
       
       {/* Deal of the Day */}
       <Suspense fallback={
-        <div className="py-16 md:py-20 bg-gradient-to-br from-violet-950/10 via-purple-950/10 to-fuchsia-950/10">
+        <div className="py-16 md:py-20 bg-[#0A0A0F]">
           <div className="wrapper">
-            <div className="h-96 bg-muted/50 rounded-3xl animate-pulse" />
+            <div className="h-96 bg-white/5 rounded-3xl animate-pulse" />
           </div>
         </div>
       }>

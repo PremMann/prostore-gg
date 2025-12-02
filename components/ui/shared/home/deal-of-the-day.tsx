@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Flame, ShoppingCart, Star } from 'lucide-react';
+import { Clock, ShoppingCart, Star, Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Product } from '@/types';
 
@@ -48,130 +48,145 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
     const discountPercent = 20;
 
     return (
-        <section className="py-16 md:py-20 bg-gradient-to-br from-violet-950/10 via-purple-950/10 to-fuchsia-950/10 dark:from-violet-950/30 dark:via-purple-950/30 dark:to-fuchsia-950/30">
-            <div className="wrapper">
+        <section className="py-16 md:py-20 bg-[#0A0A0F] relative overflow-hidden">
+            {/* Subtle background gradient */}
+            <div className="absolute inset-0">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-violet-600/10 rounded-full blur-[120px]" />
+            </div>
+
+            <div className="wrapper relative">
                 {/* Section Header */}
-                <div className="text-center mb-12 space-y-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-lg">
-                        <Flame className="w-5 h-5 animate-pulse" />
-                        <span className="font-semibold">Deal of the Day</span>
-                        <Flame className="w-5 h-5 animate-pulse" />
+                <div className="flex items-center gap-3 mb-10">
+                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
+                        <Flame className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm font-medium text-orange-400">Deal of the Day</span>
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                        Flash Sale
-                    </h2>
-                    <div className="w-24 h-1 mx-auto bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 rounded-full" />
+                    <div className="flex items-center gap-2 text-zinc-500">
+                        <Clock className="w-4 h-4" />
+                        <span className="text-sm">Ends in {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
+                    </div>
                 </div>
 
-                <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-                    {/* Product Image */}
-                    <div className="relative group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 rounded-3xl blur-2xl group-hover:blur-3xl transition-all duration-500" />
-                        <div className="relative overflow-hidden rounded-3xl bg-card border border-border/50">
+                {/* Deal Card */}
+                <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden">
+                    <div className="grid lg:grid-cols-2">
+                        {/* Product Image */}
+                        <div className="relative group">
                             <Link href={`/product/${product.slug}`}>
-                                <div className="relative aspect-square">
+                                <div className="relative aspect-square lg:aspect-auto lg:h-full min-h-[400px]">
                                     <Image
                                         src={product.images[0] || '/images/placeholder.jpg'}
                                         alt={product.name}
                                         fill
-                                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                                        className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
+                                    {/* Overlay gradient */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-transparent to-transparent lg:bg-gradient-to-r" />
                                 </div>
                             </Link>
                             {/* Discount Badge */}
-                            <div className="absolute top-4 left-4 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-sm shadow-lg">
+                            <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-orange-500 text-white font-bold text-sm shadow-lg">
                                 -{discountPercent}% OFF
                             </div>
                         </div>
-                    </div>
 
-                    {/* Product Details */}
-                    <div className="space-y-6">
-                        {/* Countdown Timer */}
-                        <div className="flex items-center gap-4">
-                            <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            <span className="text-muted-foreground font-medium">Ends in:</span>
-                            <div className="flex gap-2">
+                        {/* Product Details */}
+                        <div className="p-8 lg:p-12 flex flex-col justify-center space-y-6">
+                            {/* Countdown Timer */}
+                            <div className="flex gap-3">
                                 {[
-                                    { value: timeLeft.hours, label: 'Hrs' },
+                                    { value: timeLeft.hours, label: 'Hours' },
                                     { value: timeLeft.minutes, label: 'Min' },
                                     { value: timeLeft.seconds, label: 'Sec' },
                                 ].map((item, index) => (
-                                    <div key={index} className="flex flex-col items-center">
-                                        <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white font-bold text-xl shadow-lg">
+                                    <div key={index} className="text-center">
+                                        <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white font-bold text-2xl">
                                             {String(item.value).padStart(2, '0')}
                                         </div>
-                                        <span className="text-xs text-muted-foreground mt-1">{item.label}</span>
+                                        <span className="text-xs text-zinc-500 mt-1.5 block">{item.label}</span>
                                     </div>
                                 ))}
                             </div>
-                        </div>
 
-                        {/* Product Name */}
-                        <Link href={`/product/${product.slug}`}>
-                            <h3 className="text-3xl md:text-4xl font-bold hover:text-purple-600 dark:hover:text-purple-400 transition-colors">
-                                {product.name}
-                            </h3>
-                        </Link>
-
-                        {/* Rating */}
-                        <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-1">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star
-                                        key={i}
-                                        className={`w-5 h-5 ${
-                                            i < Math.floor(Number(product.rating))
-                                                ? 'text-yellow-400 fill-yellow-400'
-                                                : 'text-gray-300'
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                            <span className="text-muted-foreground">
-                                ({product.numReviews} reviews)
-                            </span>
-                        </div>
-
-                        {/* Description */}
-                        <p className="text-muted-foreground text-lg line-clamp-3">
-                            {product.description}
-                        </p>
-
-                        {/* Price */}
-                        <div className="flex items-baseline gap-4">
-                            <span className="text-4xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                                ${product.price}
-                            </span>
-                            <span className="text-xl text-muted-foreground line-through">
-                                ${originalPrice}
-                            </span>
-                        </div>
-
-                        {/* Stock Status */}
-                        <div className="flex items-center gap-2">
-                            <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
-                                <div 
-                                    className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full"
-                                    style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
-                                />
-                            </div>
-                            <span className="text-sm text-muted-foreground">
-                                {product.stock} items left
-                            </span>
-                        </div>
-
-                        {/* CTA Button */}
-                        <Button
-                            asChild
-                            size="lg"
-                            className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105"
-                        >
-                            <Link href={`/product/${product.slug}`} className="flex items-center gap-2">
-                                <ShoppingCart className="w-5 h-5" />
-                                Shop Now
+                            {/* Product Name */}
+                            <Link href={`/product/${product.slug}`}>
+                                <h3 className="text-2xl md:text-3xl font-bold text-white hover:text-violet-400 transition-colors">
+                                    {product.name}
+                                </h3>
                             </Link>
-                        </Button>
+
+                            {/* Rating */}
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={`w-4 h-4 ${
+                                                i < Math.floor(Number(product.rating))
+                                                    ? 'text-yellow-400 fill-yellow-400'
+                                                    : 'text-zinc-600'
+                                            }`}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-sm text-zinc-500">
+                                    ({product.numReviews} reviews)
+                                </span>
+                            </div>
+
+                            {/* Description */}
+                            <p className="text-zinc-400 line-clamp-2">
+                                {product.description}
+                            </p>
+
+                            {/* Price */}
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-3xl font-bold text-white">
+                                    ${product.price}
+                                </span>
+                                <span className="text-lg text-zinc-500 line-through">
+                                    ${originalPrice}
+                                </span>
+                            </div>
+
+                            {/* Stock Progress */}
+                            <div className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-zinc-500">Available</span>
+                                    <span className="text-zinc-400">{product.stock} items left</span>
+                                </div>
+                                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                                    <div 
+                                        className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-500"
+                                        style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* CTA Buttons */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white border-0 shadow-lg shadow-violet-500/25 transition-all duration-300 rounded-xl"
+                                >
+                                    <Link href={`/product/${product.slug}`} className="flex items-center justify-center gap-2">
+                                        <ShoppingCart className="w-4 h-4" />
+                                        Add to Cart
+                                    </Link>
+                                </Button>
+                                <Button
+                                    asChild
+                                    size="lg"
+                                    variant="ghost"
+                                    className="text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl"
+                                >
+                                    <Link href={`/product/${product.slug}`}>
+                                        View Details
+                                    </Link>
+                                </Button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
