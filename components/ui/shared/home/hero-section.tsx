@@ -1,95 +1,117 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, ShoppingBag, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const HeroSection = () => {
     return (
-        <section className="relative overflow-hidden bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/20 dark:via-purple-950/20 dark:to-fuchsia-950/20">
-            {/* Animated background elements */}
-            <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-300/30 dark:bg-purple-600/10 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-fuchsia-300/30 dark:bg-fuchsia-600/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-violet-300/20 dark:bg-violet-600/10 rounded-full blur-3xl animate-pulse delay-500" />
+        <section className="relative overflow-hidden bg-[#0A0A0F] dark:bg-[#0A0A0F]">
+            {/* Subtle gradient background */}
+            <div className="absolute inset-0">
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-600/8 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-600/6 rounded-full blur-[100px]" />
             </div>
 
-            <div className="wrapper relative py-20 md:py-28 lg:py-36">
-                <div className="max-w-4xl mx-auto text-center space-y-8">
-                    {/* Badge */}
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-sm border border-purple-200/50 dark:border-purple-800/50 shadow-lg animate-fade-in">
-                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                        <span className="text-sm font-medium bg-gradient-to-r from-purple-600 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                            New Collection Available
-                        </span>
+            <div className="wrapper relative py-16 md:py-24 lg:py-32">
+                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+                    {/* Left Content */}
+                    <div className="space-y-8 text-center lg:text-left">
+                        {/* Eyebrow */}
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
+                            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
+                            <span className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
+                                New Drop
+                            </span>
+                        </div>
+
+                        {/* Main Heading */}
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1]">
+                            Discover Quality
+                            <br />
+                            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                                That Speaks
+                            </span>
+                            <br />
+                            For Itself
+                        </h1>
+
+                        {/* Subtitle */}
+                        <p className="text-lg text-zinc-400 max-w-md mx-auto lg:mx-0">
+                            Premium essentials at fair prices. Fast, free shipping on orders $50+.
+                        </p>
+
+                        {/* CTA Buttons */}
+                        <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4">
+                            <Button
+                                asChild
+                                size="lg"
+                                className="group bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 text-white border-0 shadow-lg shadow-violet-500/25 hover:shadow-xl hover:shadow-violet-500/30 transition-all duration-300 rounded-full px-8"
+                            >
+                                <Link href="/search?sort=newest" className="flex items-center gap-2">
+                                    Shop New Arrivals
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </Button>
+                            <Button
+                                asChild
+                                size="lg"
+                                variant="ghost"
+                                className="group text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full px-8"
+                            >
+                                <Link href="/search" className="flex items-center gap-2">
+                                    Explore Collections
+                                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </Button>
+                        </div>
+
+                        {/* Inline Trust Strip */}
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 pt-4 text-sm text-zinc-500">
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-zinc-300 font-semibold">10K+</span> customers
+                            </span>
+                            <span className="hidden sm:inline text-zinc-700">·</span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-zinc-300 font-semibold">500+</span> products
+                            </span>
+                            <span className="hidden sm:inline text-zinc-700">·</span>
+                            <span className="flex items-center gap-1.5">
+                                <span className="text-yellow-500">★</span>
+                                <span className="text-zinc-300 font-semibold">4.9</span> rating
+                            </span>
+                        </div>
                     </div>
 
-                    {/* Main Heading */}
-                    <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight animate-fade-in-up">
-                        <span className="bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                            Discover Premium
-                        </span>
-                        <br />
-                        <span className="text-foreground">Products You&apos;ll Love</span>
-                    </h1>
+                    {/* Right - Product Collage */}
+                    <div className="relative hidden lg:block">
+                        <div className="relative w-full aspect-square max-w-lg mx-auto">
+                            {/* Background glow */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 rounded-3xl blur-2xl" />
+                            
+                            {/* Main product card */}
+                            <div className="absolute top-8 left-8 right-8 bottom-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl">
+                                <Image
+                                    src="/images/main.png"
+                                    alt="Featured Product"
+                                    fill
+                                    className="object-cover opacity-90"
+                                    priority
+                                />
+                                {/* Light sweep effect */}
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent" />
+                            </div>
 
-                    {/* Subtitle */}
-                    <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto animate-fade-in-up animation-delay-200">
-                        Curated collection of high-quality products at unbeatable prices.
-                        Shop with confidence and enjoy fast, free shipping on all orders.
-                    </p>
-
-                    {/* CTA Buttons */}
-                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up animation-delay-400">
-                        <Button
-                            asChild
-                            size="lg"
-                            className="group bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 transition-all duration-300 hover:scale-105"
-                        >
-                            <Link href="#products" className="flex items-center gap-2">
-                                <ShoppingBag className="w-5 h-5" />
-                                Shop Now
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </Button>
-                        <Button
-                            asChild
-                            size="lg"
-                            variant="outline"
-                            className="group border-2 hover:border-purple-600 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/20 transition-all duration-300"
-                        >
-                            <Link href="#featured" className="flex items-center gap-2">
-                                View Collection
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Link>
-                        </Button>
-                    </div>
-
-                    {/* Trust Indicators */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 animate-fade-in-up animation-delay-600">
-                        <div className="space-y-1">
-                            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-violet-600 to-purple-600 dark:from-violet-400 dark:to-purple-400 bg-clip-text text-transparent">
-                                10K+
+                            {/* Floating accent cards */}
+                            <div className="absolute -top-4 -right-4 w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/30 flex items-center justify-center">
+                                <span className="text-white font-bold text-lg">NEW</span>
                             </div>
-                            <div className="text-sm text-muted-foreground">Happy Customers</div>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-purple-600 to-fuchsia-600 dark:from-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                                500+
+                            
+                            <div className="absolute -bottom-2 -left-2 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
+                                <div className="text-xs text-zinc-400">Starting at</div>
+                                <div className="text-xl font-bold text-white">$29.99</div>
                             </div>
-                            <div className="text-sm text-muted-foreground">Products</div>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-fuchsia-600 to-pink-600 dark:from-fuchsia-400 dark:to-pink-400 bg-clip-text text-transparent">
-                                4.9★
-                            </div>
-                            <div className="text-sm text-muted-foreground">Rating</div>
-                        </div>
-                        <div className="space-y-1">
-                            <div className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-pink-600 to-rose-600 dark:from-pink-400 dark:to-rose-400 bg-clip-text text-transparent">
-                                Free
-                            </div>
-                            <div className="text-sm text-muted-foreground">Shipping</div>
                         </div>
                     </div>
                 </div>

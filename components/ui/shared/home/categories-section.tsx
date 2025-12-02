@@ -1,106 +1,103 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 
 const categories = [
     {
-        name: "Men's Clothing",
+        name: "Men's",
         slug: 'mens-clothing',
-        description: 'Shirts, pants, outerwear & more',
-        gradient: 'from-blue-600 to-cyan-600',
+        icon: '👔',
+        color: 'from-blue-500/20 to-cyan-500/20',
+        hoverColor: 'group-hover:from-blue-500/30 group-hover:to-cyan-500/30',
     },
     {
-        name: "Women's Clothing",
+        name: "Women's",
         slug: 'womens-clothing',
-        description: 'Dresses, tops, bottoms & activewear',
-        gradient: 'from-pink-600 to-rose-600',
+        icon: '👗',
+        color: 'from-pink-500/20 to-rose-500/20',
+        hoverColor: 'group-hover:from-pink-500/30 group-hover:to-rose-500/30',
     },
     {
         name: 'Accessories',
         slug: 'accessories',
-        description: 'Bags, watches, jewelry & belts',
-        gradient: 'from-purple-600 to-fuchsia-600',
+        icon: '⌚',
+        color: 'from-violet-500/20 to-purple-500/20',
+        hoverColor: 'group-hover:from-violet-500/30 group-hover:to-purple-500/30',
     },
     {
         name: 'Footwear',
         slug: 'footwear',
-        description: 'Shoes, sneakers, boots & sandals',
-        gradient: 'from-orange-600 to-amber-600',
+        icon: '👟',
+        color: 'from-orange-500/20 to-amber-500/20',
+        hoverColor: 'group-hover:from-orange-500/30 group-hover:to-amber-500/30',
+    },
+    {
+        name: 'Activewear',
+        slug: 'activewear',
+        icon: '🏃',
+        color: 'from-green-500/20 to-emerald-500/20',
+        hoverColor: 'group-hover:from-green-500/30 group-hover:to-emerald-500/30',
+    },
+    {
+        name: 'New In',
+        slug: 'new',
+        icon: '✨',
+        color: 'from-fuchsia-500/20 to-pink-500/20',
+        hoverColor: 'group-hover:from-fuchsia-500/30 group-hover:to-pink-500/30',
     },
 ];
 
 const CategoriesSection = () => {
     return (
-        <section className="py-16 md:py-20 bg-gradient-to-b from-background to-muted/20">
+        <section className="py-16 md:py-20 bg-[#0A0A0F]">
             <div className="wrapper">
                 {/* Section Header */}
-                <div className="text-center mb-12 space-y-4">
-                    <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                        Shop by Category
-                    </h2>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        Discover our curated collections across different categories
-                    </p>
-                    <div className="w-24 h-1 mx-auto bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 rounded-full" />
+                <div className="flex items-end justify-between mb-10">
+                    <div>
+                        <h2 className="text-2xl md:text-3xl font-bold text-white">
+                            Shop by Category
+                        </h2>
+                        <p className="text-zinc-500 mt-2">
+                            Find exactly what you&apos;re looking for
+                        </p>
+                    </div>
+                    <Link
+                        href="/search"
+                        className="hidden sm:flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors group"
+                    >
+                        View all
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                 </div>
 
                 {/* Category Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {categories.map((category, index) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {categories.map((category) => (
                         <Link
                             key={category.slug}
                             href={`/search?category=${encodeURIComponent(category.slug)}`}
-                            className="group relative overflow-hidden rounded-2xl bg-card border border-border/50 hover:border-purple-500/50 dark:hover:border-purple-400/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2"
+                            className="group relative overflow-hidden rounded-2xl bg-white/5 border border-white/5 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20"
                         >
-                            {/* Background Image */}
-                            <div className="relative h-64 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-900 dark:to-gray-800">
-                                {/* Placeholder gradient background */}
-                                <div className={`absolute inset-0 bg-gradient-to-br ${category.gradient} opacity-20`} />
-
-                                {/* Overlay on hover */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-
-                                {/* Icon or pattern overlay */}
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <div className={`w-32 h-32 rounded-full bg-gradient-to-br ${category.gradient} opacity-30 blur-2xl group-hover:scale-150 transition-transform duration-700`} />
-                                </div>
-                            </div>
-
-                            {/* Content */}
-                            <div className="absolute inset-0 flex flex-col justify-end p-6">
-                                <div className="space-y-2 transform group-hover:translate-y-0 transition-transform duration-500">
-                                    <h3 className="text-2xl font-bold text-white">
-                                        {category.name}
-                                    </h3>
-                                    <p className="text-sm text-gray-200 opacity-90">
-                                        {category.description}
-                                    </p>
-
-                                    {/* CTA */}
-                                    <div className="flex items-center gap-2 text-white font-medium pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                                        <span>Shop Now</span>
-                                        <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Top badge */}
-                            <div className={`absolute top-4 right-4 px-3 py-1 rounded-full bg-gradient-to-r ${category.gradient} text-white text-xs font-medium shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500`}>
-                                Explore
+                            <div className={`absolute inset-0 bg-gradient-to-br ${category.color} ${category.hoverColor} transition-all duration-300`} />
+                            
+                            <div className="relative p-6 flex flex-col items-center text-center">
+                                <span className="text-4xl mb-3">{category.icon}</span>
+                                <span className="text-sm font-medium text-white">
+                                    {category.name}
+                                </span>
                             </div>
                         </Link>
                     ))}
                 </div>
 
-                {/* View All Link */}
-                <div className="text-center mt-12">
+                {/* Mobile View All */}
+                <div className="sm:hidden text-center mt-8">
                     <Link
                         href="/search"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                        className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white transition-colors"
                     >
-                        View All Products
+                        View all categories
                         <ArrowRight className="w-4 h-4" />
                     </Link>
                 </div>
