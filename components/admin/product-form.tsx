@@ -18,7 +18,7 @@ import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { TagInput, SIZE_SUGGESTIONS, COLOR_SUGGESTIONS } from "@/components/ui/tag-input";
-
+// import { useRouter } from "next/navigation";
 export default function ProductForm({
     setOpen,
     onSuccess
