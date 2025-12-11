@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { SHIPPING_PRICE, FREE_SHIPPING_MIN_PRICE, TAX_RATE } from "./constants";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -49,5 +50,46 @@ export function round2(value: number | string) {
     return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
   } else {
     throw new Error('Value is not a number or string');
+  }
+}
+
+
+export function calcPrice(items: { price: string; qty: number;[key: string]: unknown }[]) {
+  // Calculate items price
+  const itemsPrice = round2(
+    items.reduce((acc, item) => acc + Number(item.price) * item.qty, 0)
+  );
+
+  // Calculate shipping price
+  const shippingPrice = itemsPrice > FREE_SHIPPING_MIN_PRICE ? 0 : SHIPPING_PRICE;
+
+  // Calculate tax price
+  const taxPrice = round2(itemsPrice * TAX_RATE);
+
+  // Calculate total price
+  const totalPrice = round2(itemsPrice + shippingPrice + taxPrice);
+
+  return {
+    itemsPrice: formatNumberWithDecimal(itemsPrice),
+    shippingPrice: formatNumberWithDecimal(shippingPrice),
+    taxPrice: formatNumberWithDecimal(taxPrice),
+    totalPrice: formatNumberWithDecimal(totalPrice),
+  };
+}
+
+
+export function formatCurrency(amount: number | string | null) {
+  if (typeof amount === 'number') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  } else if (typeof amount === 'string') {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(Number(amount));
+  } else {
+    return 'NaN';
   }
 }
