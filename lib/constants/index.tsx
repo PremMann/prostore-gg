@@ -13,9 +13,92 @@ export const signUpDefaultValues = {
   confirmPassword: '',
 };
 
+// Category hierarchy with subcategories
 export const PRODUCT_CATEGORIES = [
-  { name: "Men's Clothing", value: 'mens-clothing' },
-  { name: "Women's Clothing", value: 'womens-clothing' },
-  { name: 'Accessories', value: 'accessories' },
-  { name: 'Footwear', value: 'footwear' },
+  {
+    name: "Men's Clothing",
+    value: 'mens-clothing',
+    subcategories: [
+      { name: 'T-Shirts & Polos', value: 'mens-tshirts' },
+      { name: 'Shirts', value: 'mens-shirts' },
+      { name: 'Jeans & Pants', value: 'mens-pants' },
+      { name: 'Jackets & Coats', value: 'mens-jackets' },
+      { name: 'Activewear', value: 'mens-activewear' },
+      { name: 'Suits & Blazers', value: 'mens-suits' },
+    ]
+  },
+  {
+    name: "Women's Clothing",
+    value: 'womens-clothing',
+    subcategories: [
+      { name: 'Dresses', value: 'womens-dresses' },
+      { name: 'Tops & Blouses', value: 'womens-tops' },
+      { name: 'Jeans & Pants', value: 'womens-pants' },
+      { name: 'Skirts', value: 'womens-skirts' },
+      { name: 'Jackets & Coats', value: 'womens-jackets' },
+      { name: 'Activewear', value: 'womens-activewear' },
+    ]
+  },
+  {
+    name: 'Accessories',
+    value: 'accessories',
+    subcategories: [
+      { name: 'Bags & Wallets', value: 'bags-wallets' },
+      { name: 'Watches', value: 'watches' },
+      { name: 'Jewelry', value: 'jewelry' },
+      { name: 'Sunglasses', value: 'sunglasses' },
+      { name: 'Belts', value: 'belts' },
+      { name: 'Hats & Caps', value: 'hats-caps' },
+    ]
+  },
+  {
+    name: 'Footwear',
+    value: 'footwear',
+    subcategories: [
+      { name: 'Sneakers', value: 'sneakers' },
+      { name: 'Boots', value: 'boots' },
+      { name: 'Sandals', value: 'sandals' },
+      { name: 'Formal Shoes', value: 'formal-shoes' },
+      { name: 'Sports Shoes', value: 'sports-shoes' },
+      { name: 'Slippers', value: 'slippers' },
+    ]
+  },
 ] as const;
+
+// Helper function to get all category values (main + subcategories)
+export const getAllCategoryValues = () => {
+  const allCategories: string[] = [];
+  PRODUCT_CATEGORIES.forEach(mainCat => {
+    allCategories.push(mainCat.value);
+    if (mainCat.subcategories) {
+      mainCat.subcategories.forEach(subCat => {
+        allCategories.push(subCat.value);
+      });
+    }
+  });
+  return allCategories;
+};
+
+// Helper function to get subcategories for a main category
+export const getSubcategories = (mainCategory: string) => {
+  const category = PRODUCT_CATEGORIES.find(cat => cat.value === mainCategory);
+  return category?.subcategories || [];
+};
+
+// Helper function to find parent category
+export const getParentCategory = (categoryValue: string) => {
+  for (const mainCat of PRODUCT_CATEGORIES) {
+    if (mainCat.value === categoryValue) {
+      return null; // It's a main category
+    }
+    if (mainCat.subcategories?.some(sub => sub.value === categoryValue)) {
+      return mainCat;
+    }
+  }
+  return null;
+};
+
+// Helper function to check if a category is a main category
+export const isMainCategory = (categoryValue: string) => {
+  return PRODUCT_CATEGORIES.some(cat => cat.value === categoryValue);
+};

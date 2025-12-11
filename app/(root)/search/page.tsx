@@ -32,33 +32,11 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<RawSearchPar
     const pagination = result.success && result.data ? result.data.pagination : null;
 
     // Get display title
-    const getTitle = () => {
-        if (category) {
-            return category.split('-').map(word =>
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
-        }
-        if (search) {
-            return `Search Results for "${search}"`;
-        }
-        return 'All Products';
-    };
+
 
     return (
         <div className="min-h-screen">
-            {/* Page Header */}
-            <div className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/20 dark:via-purple-950/20 dark:to-fuchsia-950/20 py-12 md:py-16">
-                <div className="wrapper">
-                    <h1 className="text-4xl md:text-5xl font-bold text-center bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 dark:from-violet-400 dark:via-purple-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
-                        {getTitle()}
-                    </h1>
-                    {pagination && (
-                        <p className="text-center text-muted-foreground mt-4">
-                            Showing {products.length} of {pagination.total} products
-                        </p>
-                    )}
-                </div>
-            </div>
+
 
             {/* Filters and Products */}
             <div className="wrapper py-8">
@@ -92,8 +70,8 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<RawSearchPar
                                                     page: pageNum.toString(),
                                                 }).toString()}`}
                                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${pageNum === page
-                                                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg'
-                                                        : 'bg-card border border-border hover:border-purple-500'
+                                                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg'
+                                                    : 'bg-card border border-border hover:border-purple-500'
                                                     }`}
                                             >
                                                 {pageNum}
