@@ -7,11 +7,11 @@ import { Button } from '@/components/ui/button';
 
 const HeroSection = () => {
     return (
-        <section className="relative overflow-hidden bg-[#0A0A0F] dark:bg-[#0A0A0F]">
+        <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-muted/30 dark:from-[#0A0A0F] dark:via-[#0A0A0F] dark:to-muted/10">
             {/* Subtle gradient background */}
             <div className="absolute inset-0">
-                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-600/8 rounded-full blur-[120px]" />
-                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-600/6 rounded-full blur-[100px]" />
+                <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-violet-600/8 dark:bg-violet-600/8 rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-fuchsia-600/6 dark:bg-fuchsia-600/6 rounded-full blur-[100px]" />
             </div>
 
             <div className="wrapper relative py-16 md:py-24 lg:py-32">
@@ -19,18 +19,18 @@ const HeroSection = () => {
                     {/* Left Content */}
                     <div className="space-y-8 text-center lg:text-left">
                         {/* Eyebrow */}
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 backdrop-blur-sm border border-white/10">
-                            <Sparkles className="w-3.5 h-3.5 text-violet-400" />
-                            <span className="text-xs font-medium text-zinc-300 uppercase tracking-wider">
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/50 dark:bg-white/5 backdrop-blur-sm border border-border dark:border-white/10">
+                            <Sparkles className="w-3.5 h-3.5 text-violet-500 dark:text-violet-400" />
+                            <span className="text-xs font-medium text-muted-foreground dark:text-zinc-300 uppercase tracking-wider">
                                 New Drop
                             </span>
                         </div>
 
                         {/* Main Heading */}
-                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-[1.1]">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
                             Discover Quality
                             <br />
-                            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 bg-clip-text text-transparent">
                                 That Speaks
                             </span>
                             <br />
@@ -38,7 +38,7 @@ const HeroSection = () => {
                         </h1>
 
                         {/* Subtitle */}
-                        <p className="text-lg text-zinc-400 max-w-md mx-auto lg:mx-0">
+                        <p className="text-lg text-muted-foreground dark:text-zinc-400 max-w-md mx-auto lg:mx-0">
                             Premium essentials at fair prices. Fast, free shipping on orders $50+.
                         </p>
 
@@ -58,7 +58,7 @@ const HeroSection = () => {
                                 asChild
                                 size="lg"
                                 variant="ghost"
-                                className="group text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-full px-8"
+                                className="group text-foreground dark:text-zinc-300 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/5 transition-all duration-300 rounded-full px-8"
                             >
                                 <Link href="/search" className="flex items-center gap-2">
                                     Explore Collections
@@ -68,18 +68,18 @@ const HeroSection = () => {
                         </div>
 
                         {/* Inline Trust Strip */}
-                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 pt-4 text-sm text-zinc-500">
+                        <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-6 gap-y-2 pt-4 text-sm text-muted-foreground dark:text-zinc-500">
                             <span className="flex items-center gap-1.5">
-                                <span className="text-zinc-300 font-semibold">10K+</span> customers
+                                <span className="text-foreground dark:text-zinc-300 font-semibold">10K+</span> customers
                             </span>
-                            <span className="hidden sm:inline text-zinc-700">·</span>
+                            <span className="hidden sm:inline text-border dark:text-zinc-700">·</span>
                             <span className="flex items-center gap-1.5">
-                                <span className="text-zinc-300 font-semibold">500+</span> products
+                                <span className="text-foreground dark:text-zinc-300 font-semibold">500+</span> products
                             </span>
-                            <span className="hidden sm:inline text-zinc-700">·</span>
+                            <span className="hidden sm:inline text-border dark:text-zinc-700">·</span>
                             <span className="flex items-center gap-1.5">
                                 <span className="text-yellow-500">★</span>
-                                <span className="text-zinc-300 font-semibold">4.9</span> rating
+                                <span className="text-foreground dark:text-zinc-300 font-semibold">4.9</span> rating
                             </span>
                         </div>
                     </div>
@@ -89,9 +89,9 @@ const HeroSection = () => {
                         <div className="relative w-full aspect-square max-w-lg mx-auto">
                             {/* Background glow */}
                             <div className="absolute inset-0 bg-gradient-to-br from-violet-600/20 to-fuchsia-600/20 rounded-3xl blur-2xl" />
-                            
+
                             {/* Main product card */}
-                            <div className="absolute top-8 left-8 right-8 bottom-8 rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden shadow-2xl">
+                            <div className="absolute top-8 left-8 right-8 bottom-8 rounded-3xl bg-card/50 dark:bg-white/5 backdrop-blur-xl border border-border dark:border-white/10 overflow-hidden shadow-2xl">
                                 <Image
                                     src="/images/main.png"
                                     alt="Featured Product"
@@ -107,10 +107,10 @@ const HeroSection = () => {
                             <div className="absolute -top-4 -right-4 w-24 h-24 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/30 flex items-center justify-center">
                                 <span className="text-white font-bold text-lg">NEW</span>
                             </div>
-                            
-                            <div className="absolute -bottom-2 -left-2 px-4 py-3 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-xl">
-                                <div className="text-xs text-zinc-400">Starting at</div>
-                                <div className="text-xl font-bold text-white">$29.99</div>
+
+                            <div className="absolute -bottom-2 -left-2 px-4 py-3 rounded-2xl bg-card/80 dark:bg-white/10 backdrop-blur-xl border border-border dark:border-white/20 shadow-xl">
+                                <div className="text-xs text-muted-foreground dark:text-zinc-400">Starting at</div>
+                                <div className="text-xl font-bold text-foreground dark:text-white">$29.99</div>
                             </div>
                         </div>
                     </div>

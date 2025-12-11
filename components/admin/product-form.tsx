@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -246,9 +246,16 @@ export default function ProductForm({
                         </SelectTrigger>
                         <SelectContent>
                             {PRODUCT_CATEGORIES.map((category) => (
-                                <SelectItem key={category.value} value={category.value}>
-                                    {category.name}
-                                </SelectItem>
+                                <Fragment key={category.value}>
+                                    <SelectItem value={category.value} className="font-bold">
+                                        {category.name}
+                                    </SelectItem>
+                                    {category.subcategories?.map((sub) => (
+                                        <SelectItem key={sub.value} value={sub.value} className="pl-8 text-muted-foreground">
+                                            {sub.name}
+                                        </SelectItem>
+                                    ))}
+                                </Fragment>
                             ))}
                         </SelectContent>
                     </Select>

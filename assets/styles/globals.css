@@ -145,12 +145,42 @@
     }
   }
 
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-20px);
+    }
+  }
+
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
   .animate-fade-in {
     animation: fade-in 0.8s ease-out forwards;
   }
 
   .animate-fade-in-up {
     animation: fade-in-up 0.8s ease-out forwards;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 8s linear infinite;
   }
 
   .animation-delay-200 {
@@ -180,7 +210,9 @@
 /* Theme Variables */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+
+  /* Light Mode Colors */
+  --background: oklch(0.99 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -211,9 +243,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Custom section backgrounds */
+  --section-bg: oklch(0.985 0 0);
+  --section-bg-alt: oklch(0.99 0 0);
+  --hero-bg: oklch(0.98 0 0);
 }
 
 .dark {
+  /* Dark Mode Colors */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -245,6 +283,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Custom section backgrounds for dark mode */
+  --section-bg: oklch(0.11 0 0);
+  --section-bg-alt: oklch(0.145 0 0);
+  --hero-bg: oklch(0.09 0 0);
 }
 
 @layer base {

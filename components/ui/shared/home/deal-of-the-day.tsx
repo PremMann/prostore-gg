@@ -23,9 +23,9 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
             const now = new Date();
             const endOfDay = new Date();
             endOfDay.setHours(23, 59, 59, 999);
-            
+
             const difference = endOfDay.getTime() - now.getTime();
-            
+
             if (difference > 0) {
                 setTimeLeft({
                     hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
@@ -48,7 +48,7 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
     const discountPercent = 20;
 
     return (
-        <section className="py-16 md:py-20 bg-[#0A0A0F] relative overflow-hidden">
+        <section className="py-16 md:py-20 bg-muted/30 dark:bg-[#0A0A0F] relative overflow-hidden">
             {/* Subtle background gradient */}
             <div className="absolute inset-0">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-violet-600/10 rounded-full blur-[120px]" />
@@ -59,16 +59,16 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                 <div className="flex items-center gap-3 mb-10">
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20">
                         <Flame className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium text-orange-400">Deal of the Day</span>
+                        <span className="text-sm font-medium text-orange-500 dark:text-orange-400">Deal of the Day</span>
                     </div>
-                    <div className="flex items-center gap-2 text-zinc-500">
+                    <div className="flex items-center gap-2 text-muted-foreground dark:text-zinc-500">
                         <Clock className="w-4 h-4" />
                         <span className="text-sm">Ends in {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}</span>
                     </div>
                 </div>
 
                 {/* Deal Card */}
-                <div className="rounded-3xl bg-white/5 backdrop-blur-xl border border-white/10 overflow-hidden">
+                <div className="rounded-3xl bg-card dark:bg-white/5 backdrop-blur-xl border border-border dark:border-white/10 overflow-hidden">
                     <div className="grid lg:grid-cols-2">
                         {/* Product Image */}
                         <div className="relative group">
@@ -81,7 +81,7 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                                         className="object-cover group-hover:scale-105 transition-transform duration-700"
                                     />
                                     {/* Overlay gradient */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0F] via-transparent to-transparent lg:bg-gradient-to-r" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-background dark:from-[#0A0A0F] via-transparent to-transparent lg:bg-gradient-to-r" />
                                 </div>
                             </Link>
                             {/* Discount Badge */}
@@ -100,17 +100,17 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                                     { value: timeLeft.seconds, label: 'Sec' },
                                 ].map((item, index) => (
                                     <div key={index} className="text-center">
-                                        <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white font-bold text-2xl">
+                                        <div className="w-16 h-16 flex items-center justify-center rounded-xl bg-muted dark:bg-white/5 border border-border dark:border-white/10 text-foreground dark:text-white font-bold text-2xl">
                                             {String(item.value).padStart(2, '0')}
                                         </div>
-                                        <span className="text-xs text-zinc-500 mt-1.5 block">{item.label}</span>
+                                        <span className="text-xs text-muted-foreground dark:text-zinc-500 mt-1.5 block">{item.label}</span>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Product Name */}
                             <Link href={`/product/${product.slug}`}>
-                                <h3 className="text-2xl md:text-3xl font-bold text-white hover:text-violet-400 transition-colors">
+                                <h3 className="text-2xl md:text-3xl font-bold text-foreground dark:text-white hover:text-violet-600 dark:hover:text-violet-400 transition-colors">
                                     {product.name}
                                 </h3>
                             </Link>
@@ -121,30 +121,29 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                                     {[...Array(5)].map((_, i) => (
                                         <Star
                                             key={i}
-                                            className={`w-4 h-4 ${
-                                                i < Math.floor(Number(product.rating))
+                                            className={`w-4 h-4 ${i < Math.floor(Number(product.rating))
                                                     ? 'text-yellow-400 fill-yellow-400'
-                                                    : 'text-zinc-600'
-                                            }`}
+                                                    : 'text-zinc-300 dark:text-zinc-600'
+                                                }`}
                                         />
                                     ))}
                                 </div>
-                                <span className="text-sm text-zinc-500">
+                                <span className="text-sm text-muted-foreground dark:text-zinc-500">
                                     ({product.numReviews} reviews)
                                 </span>
                             </div>
 
                             {/* Description */}
-                            <p className="text-zinc-400 line-clamp-2">
+                            <p className="text-muted-foreground dark:text-zinc-400 line-clamp-2">
                                 {product.description}
                             </p>
 
                             {/* Price */}
                             <div className="flex items-baseline gap-3">
-                                <span className="text-3xl font-bold text-white">
+                                <span className="text-3xl font-bold text-foreground dark:text-white">
                                     ${product.price}
                                 </span>
-                                <span className="text-lg text-zinc-500 line-through">
+                                <span className="text-lg text-muted-foreground dark:text-zinc-500 line-through">
                                     ${originalPrice}
                                 </span>
                             </div>
@@ -152,11 +151,11 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                             {/* Stock Progress */}
                             <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-zinc-500">Available</span>
-                                    <span className="text-zinc-400">{product.stock} items left</span>
+                                    <span className="text-muted-foreground dark:text-zinc-500">Available</span>
+                                    <span className="text-muted-foreground dark:text-zinc-400">{product.stock} items left</span>
                                 </div>
-                                <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                                    <div 
+                                <div className="h-1.5 rounded-full bg-muted dark:bg-white/10 overflow-hidden">
+                                    <div
                                         className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-500"
                                         style={{ width: `${Math.min(100, (product.stock / 50) * 100)}%` }}
                                     />
@@ -179,7 +178,7 @@ const DealOfTheDay = ({ product }: DealOfTheDayProps) => {
                                     asChild
                                     size="lg"
                                     variant="ghost"
-                                    className="text-zinc-300 hover:text-white hover:bg-white/5 transition-all duration-300 rounded-xl"
+                                    className="text-foreground dark:text-zinc-300 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/5 transition-all duration-300 rounded-xl"
                                 >
                                     <Link href={`/product/${product.slug}`}>
                                         View Details

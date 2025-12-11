@@ -23,7 +23,7 @@ const features = [
 
 const FeaturesSection = () => {
     return (
-        <section className="bg-[#0A0A0F] border-y border-white/5">
+        <section className="bg-muted/30 dark:bg-[#0A0A0F] border-y border-border dark:border-white/5">
             <div className="wrapper py-4">
                 <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
                     {features.map((feature, index) => {
@@ -31,7 +31,7 @@ const FeaturesSection = () => {
                         return (
                             <div
                                 key={index}
-                                className="flex items-center gap-2 text-zinc-500 hover:text-zinc-300 transition-colors duration-200"
+                                className="flex items-center gap-2 text-muted-foreground dark:text-zinc-500 hover:text-foreground dark:hover:text-zinc-300 transition-colors duration-200"
                             >
                                 <Icon className="w-4 h-4" />
                                 <span className="text-sm">{feature.text}</span>
