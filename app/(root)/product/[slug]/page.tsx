@@ -5,8 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import ProductPrice from "@/components/ui/shared/product/product-price";
 import ProductImages from "@/components/ui/shared/product/product-images";
 import AddToCart from "@/components/ui/shared/product/add-to-cart";
-import { getMyCart } from "@/lib/actions/cart.actions";
-import { ColorSwatchList } from "@/components/ui/color-swatch";
+
+
 
 import { Product } from "@/types";
 
@@ -20,7 +20,7 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
     return notFound();
   }
 
-  const cart = await getMyCart();
+
   return (
     <>
       <section className="py-6">
@@ -58,23 +58,7 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
                 />
               </div>
 
-              {product.sizes && product.sizes.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="font-semibold">Sizes:</span>
-                  <div className="flex gap-2">
-                    {product.sizes.map((size: string) => (
-                      <Badge key={size} variant="outline">{size}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
 
-              {product.colors && product.colors.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <span className="font-semibold">Colors:</span>
-                  <ColorSwatchList colors={product.colors} size="md" showLabels={true} />
-                </div>
-              )}
             </div>
 
             <div className='border-t pt-6'>
@@ -105,17 +89,7 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
 
                 {product.stock > 0 && (
                   <div className='pt-4 border-t'>
-                    <AddToCart
-                      cart={cart}
-                      item={{
-                        productId: product.id,
-                        name: product.name,
-                        slug: product.slug,
-                        price: product.price,
-                        qty: 1,
-                        image: product.images![0],
-                      }}
-                    />
+                    <AddToCart product={product} />
                   </div>
                 )}
               </CardContent>

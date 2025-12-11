@@ -12,6 +12,25 @@ export const signUpDefaultValues = {
   password: '',
   confirmPassword: '',
 };
+export const shippingAddressDefaultValues = {
+  fullName: '',
+  streetAddress: '',
+  city: '',
+  postalCode: '',
+  country: '',
+};
+
+export const PAYMENT_METHODS = process.env.PAYMENT_METHODS
+  ? process.env.PAYMENT_METHODS.split(', ')
+  : ['PayPal', 'Stripe', 'CashOnDelivery'];
+export const DEFAULT_PAYMENT_METHOD =
+  process.env.DEFAULT_PAYMENT_METHOD || 'PayPal';
+
+export const PAGE_SIZE = Number(process.env.PAGE_SIZE) || 12;
+
+export const SHIPPING_PRICE = Number(process.env.NEXT_PUBLIC_SHIPPING_PRICE) || 10;
+export const FREE_SHIPPING_MIN_PRICE = Number(process.env.NEXT_PUBLIC_FREE_SHIPPING_MIN_PRICE) || 50;
+export const TAX_RATE = Number(process.env.NEXT_PUBLIC_TAX_RATE) || 0.15;
 
 // Category hierarchy with subcategories
 export const PRODUCT_CATEGORIES = [

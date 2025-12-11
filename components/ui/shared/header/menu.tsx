@@ -16,13 +16,13 @@ const Menu = () => {
     <div className='flex justify-end gap-3'>
       <nav className='hidden md:flex w-full max-w-xs gap-1'>
         <ModeToggle />
-            <Button asChild variant={"ghost"}>
-                <Link href='/card'>
-                <ShoppingCart /> Cart
-                </Link>
-            </Button>
-            <UserButton />
-            {/* <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
+        <Button asChild variant={"ghost"}>
+          <Link href='/cart'>
+            <ShoppingCart /> Cart
+          </Link>
+        </Button>
+        <UserButton />
+        {/* <Button asChild className='bg-blue-600 text-white hover:bg-blue-700' variant={"ghost"}>
                 <Link href='/sign-in'>
                 <UserIcon /> Sign In
                 </Link>
@@ -37,7 +37,7 @@ const Menu = () => {
             <SheetTitle>Menu</SheetTitle>
             <ModeToggle />
             <Button asChild variant={"ghost"}>
-              <Link href='/card'>
+              <Link href='/cart'>
                 <ShoppingCart /> Cart
               </Link>
             </Button>

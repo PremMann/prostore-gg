@@ -175,8 +175,8 @@ const SearchFilters = ({ categories, currentCategory, currentSearch }: SearchFil
                         <button
                             onClick={() => handleCategoryClick('')}
                             className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between group ${!currentCategory
-                                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
-                                    : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
+                                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                                : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
                                 }`}
                         >
                             <span>All Products</span>
@@ -198,10 +198,10 @@ const SearchFilters = ({ categories, currentCategory, currentSearch }: SearchFil
                                         <button
                                             onClick={() => handleCategoryClick(mainCat.value)}
                                             className={`flex-1 text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between group ${isActive
-                                                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
-                                                    : hasActiveSubcategory
-                                                        ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-700'
-                                                        : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
+                                                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                                                : hasActiveSubcategory
+                                                    ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-700'
+                                                    : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
                                                 }`}
                                         >
                                             <span>{mainCat.name}</span>
@@ -213,8 +213,8 @@ const SearchFilters = ({ categories, currentCategory, currentSearch }: SearchFil
                                             <button
                                                 onClick={() => toggleCategory(mainCat.value)}
                                                 className={`p-3 rounded-lg transition-all ${isExpanded
-                                                        ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400'
-                                                        : 'bg-muted/50 hover:bg-muted text-muted-foreground'
+                                                    ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400'
+                                                    : 'bg-muted/50 hover:bg-muted text-muted-foreground'
                                                     }`}
                                             >
                                                 <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
@@ -232,8 +232,8 @@ const SearchFilters = ({ categories, currentCategory, currentSearch }: SearchFil
                                                         key={subCat.value}
                                                         onClick={() => handleCategoryClick(subCat.value)}
                                                         className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${isSubActive
-                                                                ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
-                                                                : 'hover:bg-violet-50 dark:hover:bg-violet-950/20 text-muted-foreground hover:text-foreground'
+                                                            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
+                                                            : 'hover:bg-violet-50 dark:hover:bg-violet-950/20 text-muted-foreground hover:text-foreground'
                                                             }`}
                                                     >
                                                         <span>{subCat.name}</span>
