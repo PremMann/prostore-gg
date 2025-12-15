@@ -1,28 +1,28 @@
 const ProductListSkeleton = () => {
     return (
-        <section className="py-16 md:py-20 bg-[#0A0A0F]">
-            <div className="wrapper">
+        <section className="py-20 md:py-28 bg-white dark:bg-black">
+            <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
                 {/* Title skeleton */}
-                <div className="flex items-end justify-between mb-10">
-                    <div className="space-y-3">
-                        <div className="h-8 w-48 bg-white/5 rounded-lg animate-pulse" />
-                        <div className="h-4 w-32 bg-white/5 rounded-lg animate-pulse" />
+                <div className="flex items-end justify-between mb-16">
+                    <div className="space-y-4">
+                        <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                        <div className="h-px w-16 bg-zinc-200 dark:bg-zinc-800" />
                     </div>
                 </div>
 
                 {/* Product grid skeleton */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="rounded-2xl bg-white/5 border border-white/5 overflow-hidden">
+                        <div key={i} className="overflow-hidden">
                             {/* Image skeleton */}
-                            <div className="aspect-square bg-white/5 animate-pulse" />
+                            <div className="aspect-[3/4] bg-zinc-100 dark:bg-zinc-900 animate-pulse mb-4" />
                             
                             {/* Content skeleton */}
-                            <div className="p-4 space-y-3">
-                                <div className="h-3 w-16 bg-white/10 rounded animate-pulse" />
-                                <div className="h-4 w-full bg-white/10 rounded animate-pulse" />
-                                <div className="h-3 w-20 bg-white/5 rounded animate-pulse" />
-                                <div className="h-5 w-16 bg-white/10 rounded animate-pulse mt-2" />
+                            <div className="space-y-2">
+                                <div className="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                                <div className="h-4 w-full bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                                <div className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 animate-pulse" />
+                                <div className="h-5 w-16 bg-zinc-200 dark:bg-zinc-800 animate-pulse mt-3" />
                             </div>
                         </div>
                     ))}

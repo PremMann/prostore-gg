@@ -5,15 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, X, ChevronRight, ChevronDown, Filter, Home } from 'lucide-react';
 import { useState } from 'react';
-import { PRODUCT_CATEGORIES, getSubcategories, getParentCategory, isMainCategory } from '@/lib/constants';
+import { PRODUCT_CATEGORIES, getParentCategory, isMainCategory } from '@/lib/constants';
 
 interface SearchFiltersProps {
-    categories: string[];
     currentCategory?: string;
     currentSearch?: string;
 }
 
-const SearchFilters = ({ categories, currentCategory, currentSearch }: SearchFiltersProps) => {
+const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [searchInput, setSearchInput] = useState(currentSearch || '');
