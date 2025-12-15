@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, X, ChevronRight, ChevronDown, Filter, Home } from 'lucide-react';
+import { Search, X, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 import { PRODUCT_CATEGORIES, getParentCategory, isMainCategory } from '@/lib/constants';
 
@@ -16,7 +15,6 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
     const router = useRouter();
     const searchParams = useSearchParams();
     const [searchInput, setSearchInput] = useState(currentSearch || '');
-    const [isFiltersOpen, setIsFiltersOpen] = useState(true);
     const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
 
     // Determine the current main category context
@@ -70,233 +68,165 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
 
     // Get display name for category
     const getCategoryDisplayName = (categoryValue: string) => {
-        // Check main categories
         const mainCat = PRODUCT_CATEGORIES.find(cat => cat.value === categoryValue);
         if (mainCat) return mainCat.name;
 
-        // Check subcategories
         for (const mainCat of PRODUCT_CATEGORIES) {
             const subCat = mainCat.subcategories?.find(sub => sub.value === categoryValue);
             if (subCat) return subCat.name;
         }
 
-        // Fallback to formatted value
         return categoryValue.split('-').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
         ).join(' ');
     };
 
     return (
-        <div className="space-y-6">
-            {/* Mobile Filter Toggle */}
-            <div className="lg:hidden">
-                <Button
-                    onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-                    variant="outline"
-                    className="w-full justify-between"
-                >
-                    <span className="flex items-center gap-2">
-                        <Filter className="w-4 h-4" />
-                        Filters
-                    </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${isFiltersOpen ? 'rotate-180' : ''}`} />
-                </Button>
-            </div>
-
-            <div className={`space-y-6 ${!isFiltersOpen ? 'hidden lg:block' : ''}`}>
-                {/* Search Box */}
-                <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-2">
-                        <Search className="w-5 h-5 text-violet-600 dark:text-violet-400" />
-                        <h3 className="font-semibold text-lg">Search Products</h3>
+        <div className="space-y-8">
+            {/* Search Box - Minimal */}
+            <div className="space-y-4">
+                <h3 className="text-[10px] font-medium tracking-[0.2em] uppercase text-zinc-500 dark:text-zinc-500">
+                    Search
+                </h3>
+                <form onSubmit={handleSearch} className="space-y-3">
+                    <div className="relative">
+                        <Search className="absolute left-0 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 dark:text-zinc-600" />
+                        <Input
+                            type="text"
+                            placeholder="Search..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="pl-6 h-10 border-0 border-b border-zinc-200 dark:border-zinc-800 rounded-none bg-transparent focus:border-black dark:focus:border-white focus-visible:ring-0 text-sm"
+                        />
                     </div>
-                    <form onSubmit={handleSearch} className="space-y-3">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                            <Input
-                                type="text"
-                                placeholder="Search products..."
-                                value={searchInput}
-                                onChange={(e) => setSearchInput(e.target.value)}
-                                className="pl-10 h-11"
-                            />
-                        </div>
-                        <Button
+                    {searchInput && (
+                        <button
                             type="submit"
-                            className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 h-11 font-medium"
+                            className="w-full h-10 bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide uppercase transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100"
                         >
                             Search
-                        </Button>
-                    </form>
-                </div>
-
-                {/* Breadcrumb Navigation */}
-                {currentCategory && (
-                    <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 dark:from-violet-950/20 dark:to-fuchsia-950/20 border border-violet-200 dark:border-violet-800 rounded-xl p-4">
-                        <div className="flex items-center gap-2 text-sm flex-wrap">
-                            <button
-                                onClick={() => handleCategoryClick('')}
-                                className="flex items-center gap-1 text-muted-foreground hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                            >
-                                <Home className="w-4 h-4" />
-                                All
-                            </button>
-                            {currentMainCategory && currentMainCategory !== currentCategory && (
-                                <>
-                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                    <button
-                                        onClick={() => handleCategoryClick(currentMainCategory)}
-                                        className="text-muted-foreground hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                                    >
-                                        {getCategoryDisplayName(currentMainCategory)}
-                                    </button>
-                                </>
-                            )}
-                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-medium text-violet-700 dark:text-violet-300">
-                                {getCategoryDisplayName(currentCategory)}
-                            </span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Categories Filter */}
-                <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-md flex items-center justify-center">
-                            <div className="w-2 h-2 bg-white rounded-sm" />
-                        </div>
-                        <h3 className="font-semibold text-lg">Categories</h3>
-                    </div>
-
-                    <div className="space-y-2">
-                        {/* Show All Products Option */}
-                        <button
-                            onClick={() => handleCategoryClick('')}
-                            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between group ${!currentCategory
-                                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
-                                : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
-                                }`}
-                        >
-                            <span>All Products</span>
-                            {!currentCategory && (
-                                <div className="w-2 h-2 bg-white rounded-full" />
-                            )}
                         </button>
+                    )}
+                </form>
+            </div>
 
-                        {/* Main Categories with Subcategories */}
-                        {PRODUCT_CATEGORIES.map((mainCat) => {
-                            const isExpanded = expandedCategories.includes(mainCat.value) || currentMainCategory === mainCat.value;
-                            const isActive = currentCategory === mainCat.value;
-                            const hasActiveSubcategory = currentMainCategory === mainCat.value && currentCategory !== mainCat.value;
+            {/* Categories Filter - Premium Minimal */}
+            <div className="space-y-4">
+                <h3 className="text-[10px] font-medium tracking-[0.2em] uppercase text-zinc-500 dark:text-zinc-500">
+                    Categories
+                </h3>
 
-                            return (
-                                <div key={mainCat.value} className="space-y-1">
-                                    {/* Main Category */}
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => handleCategoryClick(mainCat.value)}
-                                            className={`flex-1 text-left px-4 py-3 rounded-lg font-medium transition-all flex items-center justify-between group ${isActive
-                                                ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md'
+                <div className="space-y-1">
+                    {/* Show All Products Option */}
+                    <button
+                        onClick={() => handleCategoryClick('')}
+                        className={`w-full text-left py-2 text-sm transition-all ${
+                            !currentCategory
+                                ? 'text-black dark:text-white font-medium border-b border-black dark:border-white'
+                                : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                        }`}
+                    >
+                        All Products
+                    </button>
+
+                    {/* Main Categories with Subcategories */}
+                    {PRODUCT_CATEGORIES.map((mainCat) => {
+                        const isExpanded = expandedCategories.includes(mainCat.value) || currentMainCategory === mainCat.value;
+                        const isActive = currentCategory === mainCat.value;
+                        const hasActiveSubcategory = currentMainCategory === mainCat.value && currentCategory !== mainCat.value;
+
+                        return (
+                            <div key={mainCat.value} className="space-y-1">
+                                {/* Main Category */}
+                                <div className="flex items-center justify-between group">
+                                    <button
+                                        onClick={() => handleCategoryClick(mainCat.value)}
+                                        className={`flex-1 text-left py-2 text-sm transition-all ${
+                                            isActive
+                                                ? 'text-black dark:text-white font-medium border-b border-black dark:border-white'
                                                 : hasActiveSubcategory
-                                                    ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300 border border-violet-300 dark:border-violet-700'
-                                                    : 'bg-muted/50 hover:bg-muted text-foreground hover:border-violet-300 dark:hover:border-violet-700 border border-transparent'
-                                                }`}
+                                                    ? 'text-black dark:text-white'
+                                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                                        }`}
+                                    >
+                                        {mainCat.name}
+                                    </button>
+                                    {mainCat.subcategories && mainCat.subcategories.length > 0 && (
+                                        <button
+                                            onClick={() => toggleCategory(mainCat.value)}
+                                            className="p-2 text-zinc-400 dark:text-zinc-600 hover:text-black dark:hover:text-white transition-colors"
                                         >
-                                            <span>{mainCat.name}</span>
-                                            {isActive && (
-                                                <div className="w-2 h-2 bg-white rounded-full" />
-                                            )}
+                                            <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                         </button>
-                                        {mainCat.subcategories && mainCat.subcategories.length > 0 && (
-                                            <button
-                                                onClick={() => toggleCategory(mainCat.value)}
-                                                className={`p-3 rounded-lg transition-all ${isExpanded
-                                                    ? 'bg-violet-100 dark:bg-violet-950/30 text-violet-600 dark:text-violet-400'
-                                                    : 'bg-muted/50 hover:bg-muted text-muted-foreground'
-                                                    }`}
-                                            >
-                                                <ChevronRight className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    {/* Subcategories */}
-                                    {isExpanded && mainCat.subcategories && mainCat.subcategories.length > 0 && (
-                                        <div className="ml-4 pl-4 border-l-2 border-violet-200 dark:border-violet-800 space-y-1 py-1">
-                                            {mainCat.subcategories.map((subCat) => {
-                                                const isSubActive = currentCategory === subCat.value;
-                                                return (
-                                                    <button
-                                                        key={subCat.value}
-                                                        onClick={() => handleCategoryClick(subCat.value)}
-                                                        className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-between ${isSubActive
-                                                            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white shadow-sm'
-                                                            : 'hover:bg-violet-50 dark:hover:bg-violet-950/20 text-muted-foreground hover:text-foreground'
-                                                            }`}
-                                                    >
-                                                        <span>{subCat.name}</span>
-                                                        {isSubActive && (
-                                                            <div className="w-1.5 h-1.5 bg-white rounded-full" />
-                                                        )}
-                                                    </button>
-                                                );
-                                            })}
-                                        </div>
                                     )}
                                 </div>
-                            );
-                        })}
-                    </div>
+
+                                {/* Subcategories */}
+                                {isExpanded && mainCat.subcategories && mainCat.subcategories.length > 0 && (
+                                    <div className="ml-4 pl-3 border-l border-zinc-200 dark:border-zinc-800 space-y-1 py-1">
+                                        {mainCat.subcategories.map((subCat) => {
+                                            const isSubActive = currentCategory === subCat.value;
+                                            return (
+                                                <button
+                                                    key={subCat.value}
+                                                    onClick={() => handleCategoryClick(subCat.value)}
+                                                    className={`w-full text-left py-1.5 text-xs transition-all ${
+                                                        isSubActive
+                                                            ? 'text-black dark:text-white font-medium'
+                                                            : 'text-zinc-500 dark:text-zinc-500 hover:text-black dark:hover:text-white'
+                                                    }`}
+                                                >
+                                                    {subCat.name}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
-
-                {/* Active Filters Display */}
-                {hasActiveFilters && (
-                    <div className="bg-gradient-to-br from-violet-50 via-purple-50 to-fuchsia-50 dark:from-violet-950/20 dark:via-purple-950/20 dark:to-fuchsia-950/20 border border-violet-200 dark:border-violet-800 rounded-xl p-6 space-y-3">
-                        <h3 className="font-semibold text-sm text-violet-900 dark:text-violet-100 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-violet-600 rounded-full animate-pulse" />
-                            Active Filters
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {currentCategory && (
-                                <button
-                                    onClick={() => handleCategoryClick(currentCategory)}
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-violet-900/30 border border-violet-300 dark:border-violet-700 text-violet-700 dark:text-violet-300 text-sm font-medium hover:bg-violet-100 dark:hover:bg-violet-900/50 transition-colors group"
-                                >
-                                    {getCategoryDisplayName(currentCategory)}
-                                    <X className="w-3 h-3 group-hover:text-red-500" />
-                                </button>
-                            )}
-                            {currentSearch && (
-                                <button
-                                    onClick={() => {
-                                        setSearchInput('');
-                                        const params = new URLSearchParams(searchParams.toString());
-                                        params.delete('search');
-                                        router.push(`/search?${params.toString()}`);
-                                    }}
-                                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white dark:bg-blue-900/30 border border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 text-sm font-medium hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors group"
-                                >
-                                    &quot;{currentSearch}&quot;
-                                    <X className="w-3 h-3 group-hover:text-red-500" />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {/* Clear All Filters */}
-                {hasActiveFilters && (
-                    <Button
-                        onClick={handleClearFilters}
-                        variant="outline"
-                        className="w-full border-2 hover:border-red-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-all h-11 font-medium"
-                    >
-                        <X className="w-4 h-4 mr-2" />
-                        Clear All Filters
-                    </Button>
-                )}
             </div>
+
+            {/* Active Filters - Minimal Chips */}
+            {hasActiveFilters && (
+                <div className="pt-8 border-t border-zinc-200 dark:border-zinc-800 space-y-3">
+                    <h3 className="text-[10px] font-medium tracking-[0.2em] uppercase text-zinc-500 dark:text-zinc-500">
+                        Active Filters
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                        {currentCategory && (
+                            <button
+                                onClick={() => handleCategoryClick(currentCategory)}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors group"
+                            >
+                                {getCategoryDisplayName(currentCategory)}
+                                <X className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                            </button>
+                        )}
+                        {currentSearch && (
+                            <button
+                                onClick={() => {
+                                    setSearchInput('');
+                                    const params = new URLSearchParams(searchParams.toString());
+                                    params.delete('search');
+                                    router.push(`/search?${params.toString()}`);
+                                }}
+                                className="inline-flex items-center gap-2 px-3 py-1.5 text-xs bg-zinc-100 dark:bg-zinc-900 text-black dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors group"
+                            >
+                                &quot;{currentSearch}&quot;
+                                <X className="w-3 h-3 opacity-50 group-hover:opacity-100" />
+                            </button>
+                        )}
+                    </div>
+                    <button
+                        onClick={handleClearFilters}
+                        className="text-xs tracking-wide uppercase text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white transition-colors border-b border-zinc-600 dark:border-zinc-400 hover:border-black dark:hover:border-white pb-1"
+                    >
+                        Clear All
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
