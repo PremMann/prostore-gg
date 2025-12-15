@@ -23,18 +23,20 @@ const features = [
 
 const FeaturesSection = () => {
     return (
-        <section className="bg-muted/30 dark:bg-[#0A0A0F] border-y border-border dark:border-white/5">
-            <div className="wrapper py-4">
-                <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
+        <section className="bg-zinc-50 dark:bg-zinc-950 border-y border-zinc-200 dark:border-zinc-800">
+            <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
+                <div className="flex flex-wrap items-center justify-center lg:justify-between gap-x-12 gap-y-6 py-6">
                     {features.map((feature, index) => {
                         const Icon = feature.icon;
                         return (
                             <div
                                 key={index}
-                                className="flex items-center gap-2 text-muted-foreground dark:text-zinc-500 hover:text-foreground dark:hover:text-zinc-300 transition-colors duration-200"
+                                className="flex items-center gap-3 group"
                             >
-                                <Icon className="w-4 h-4" />
-                                <span className="text-sm">{feature.text}</span>
+                                <Icon className="w-4 h-4 text-zinc-400 dark:text-zinc-600 group-hover:text-black dark:group-hover:text-white transition-colors duration-300" />
+                                <span className="text-xs tracking-wide uppercase text-zinc-600 dark:text-zinc-400 group-hover:text-black dark:group-hover:text-white transition-colors duration-300">
+                                    {feature.text}
+                                </span>
                             </div>
                         );
                     })}

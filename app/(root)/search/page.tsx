@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 import { Suspense } from 'react';
 import ProductList from "@/components/ui/shared/product/product-list";
-import { getAllProducts, getAllCategories } from "@/lib/actions/product.actions";
+import { getAllProducts } from "@/lib/actions/product.actions";
 import SearchFilters from "@/components/ui/shared/search/search-filters";
 
 type RawSearchParams = Record<string, string | string[] | undefined>;
@@ -24,10 +24,6 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<RawSearchPar
         limit: 12,
     });
 
-    // Fetch all categories for filter
-    const categoriesResult = await getAllCategories();
-    const categories = categoriesResult.success && categoriesResult.data ? categoriesResult.data : [] as string[];
-
     const products = result.success && result.data ? result.data.products : [];
     const pagination = result.success && result.data ? result.data.pagination : null;
 
@@ -45,7 +41,6 @@ const SearchPage = async ({ searchParams }: { searchParams: Promise<RawSearchPar
                     <aside className="lg:col-span-1">
                         <Suspense fallback={<div>Loading filters...</div>}>
                             <SearchFilters
-                                categories={categories}
                                 currentCategory={category}
                                 currentSearch={search}
                             />

@@ -7,19 +7,19 @@ import CategoryNav from './category-nav';
 
 const Header = () => {
   return (
-    <header className='w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50'>
-      <div className='wrapper flex-between'>
-        <div className='flex-start gap-8'>
-          <Link href='/' className='flex-start'>
+    <header className='w-full border-b border-zinc-200 dark:border-zinc-800 bg-white/95 dark:bg-black/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:supports-[backdrop-filter]:bg-black/80 sticky top-0 z-50'>
+      <div className='max-w-[1400px] mx-auto px-8 lg:px-16 flex items-center justify-between h-16 lg:h-20'>
+        <div className='flex items-center gap-12'>
+          <Link href='/' className='flex items-center'>
             <Image
               src='/images/main.png'
               alt={`${APP_NAME} logo`}
-              height={64}
-              width={64}
+              height={40}
+              width={40}
               priority={true}
               className='object-contain'
             />
-            <span className='hidden lg:block font-bold text-2xl ml-3'>
+            <span className='hidden lg:block font-light text-lg tracking-wider ml-3 uppercase text-black dark:text-white'>
               {APP_NAME}
             </span>
           </Link>
