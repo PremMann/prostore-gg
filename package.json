@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
-    "@prisma/client": "^6.2.1",
+    "@prisma/client": "^6.19.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -45,7 +45,7 @@
     "bufferutil": "^4.0.9",
     "eslint": "^9",
     "eslint-config-next": "15.5.4",
-    "prisma": "^6.2.1",
+    "prisma": "^6.19.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
