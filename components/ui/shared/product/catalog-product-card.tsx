@@ -6,19 +6,21 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import ProductPrice from './product-price';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Eye, ShoppingCart, ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { addToCart } from '@/lib/actions/cart.actions';
 import { toast } from 'sonner';
 import { useTransition, useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import { useFavorites } from '@/components/catalog/favorites-context';
+import { useLanguage } from '@/components/catalog/language-context';
 import { Heart } from 'lucide-react';
 
 const CatalogProductCard = ({ product }: { product: Product }) => {
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
     const { favorites, toggleFavorite } = useFavorites();
+    const { t } = useLanguage();
     const [selectedColor, setSelectedColor] = useState<string>('');
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +34,7 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
 
         // Validation: Check if color is required but not selected
         if (hasColors && !selectedColor) {
-            toast.error('Please select a color first.');
+            toast.error(t('product.select_color'));
             return;
         }
 
@@ -75,13 +77,15 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
 
             const res = await addToCart(item);
             if (res.success) {
-                toast.success(`${product.name} added to cart!`);
+                toast.success(`${product.name} ${t('product.added')}`);
             } else {
                 toast.error(res.message);
             }
         });
     };
 
+
+    // ... (keep scrollImage/handleScroll logic)
     const scrollImage = (direction: 'left' | 'right') => {
         if (!scrollContainerRef.current) return;
 
@@ -168,7 +172,7 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
                 {/* Stock Status Badges */}
                 {product.stock <= 0 && (
                     <div className="absolute top-2 right-2 px-2 py-1 bg-black/80 text-white text-xs font-medium uppercase tracking-wider rounded z-20 pointer-events-none">
-                        Sold Out
+                        {t('product.sold_out')}
                     </div>
                 )}
             </div>
@@ -228,11 +232,12 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
                     }}
                 >
                     <Heart className={cn("w-4 h-4 mr-2", isFavorite ? "fill-current" : "")} />
-                    {isFavorite ? 'Liked' : 'Like'}
+                    {isFavorite ? t('product.liked') : t('product.like')}
                 </Button>
             </CardFooter>
         </Card>
     );
 };
+
 
 export default CatalogProductCard;

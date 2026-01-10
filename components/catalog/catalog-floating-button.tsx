@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
 import { useFavorites } from './favorites-context';
+import { useLanguage } from './language-context';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function CatalogFloatingButton() {
     const { favorites } = useFavorites();
+    const { t } = useLanguage();
     const [isVisible, setIsVisible] = useState(false);
     const [pageId, setPageId] = useState<string | null>(null);
 
@@ -22,36 +24,27 @@ export default function CatalogFloatingButton() {
         // In a real app, this should be in .env.local
         // Using a fallback for demo if not set.
         const id = process.env.NEXT_PUBLIC_FACEBOOK_PAGE_ID;
+        // Using user provided ID if env is missing
+        const fallbackId = '925459360650971';
+
         if (id) {
             setPageId(id);
         } else {
-            console.warn("NEXT_PUBLIC_FACEBOOK_PAGE_ID is not set in .env");
+            //   console.warn("NEXT_PUBLIC_FACEBOOK_PAGE_ID is not set in .env");
+            setPageId(fallbackId);
         }
     }, []);
 
     const handleSendToMessenger = () => {
         if (favorites.length === 0) return;
 
-        // Construct the m.me link
-        // Format: https://m.me/<PAGE_ID>?ref=interested_<slug1>,<slug2>
-
-        // NOTE: Facebook requires the Page ID to be numeric usually, or the username.
-        // The Ref param is passed to the bot.
         const refParam = `interested_${favorites.join(',')}`;
-
-        // If no page ID, we can't really link deep. Let's assume a placeholder or error.
-        // Using a generic page or prompting setup if missing.
         const targetId = pageId || '925459360650971';
-
-        // If we don't have a real ID, we might just open messenger.com but the ref won't attach well 
-        // without a specific user/page target.
-        // For now, we direct to the m.me link.
-
         const url = `https://m.me/${targetId}?ref=${encodeURIComponent(refParam)}`;
 
         window.open(url, '_blank');
 
-        toast.success('Opening Messenger...');
+        toast.success(t('chat.opening'));
     };
 
     if (!isVisible) return null;
@@ -71,7 +64,7 @@ export default function CatalogFloatingButton() {
                         {favorites.length}
                     </span>
                 </div>
-                Send to Chat
+                {t('chat.send')}
             </Button>
         </div>
     );
