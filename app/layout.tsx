@@ -1,9 +1,11 @@
-import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "@/assets/styles/globals.css";
-import { APP_DESCRIPTION, APP_NAME, SERVER_URL } from "@/lib/constants";
-import { ThemeProvider } from "next-themes";
-import { Toaster } from "@/components/ui/sonner"
+import '@/assets/styles/globals.css';
+
+import { APP_DESCRIPTION, APP_NAME, SERVER_URL } from '@/lib/constants';
+import { Metadata } from 'next';
+import { ThemeProvider } from 'next-themes';
+import { Toaster } from '@/components/ui/sonner';
+import { LanguageProvider } from '@/components/catalog/language-context';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -13,14 +15,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: APP_NAME,
     template: `%s | ${APP_NAME}`,
+    default: APP_NAME,
   },
   description: APP_DESCRIPTION,
   metadataBase: new URL(SERVER_URL),
-  icons: {
-    icon: '/images/gg.png',
-  },
 };
 
 export default function RootLayout({
@@ -29,19 +28,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.className} antialiased`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
+    <html lang='en' suppressHydrationWarning>
+      <body className={`${inter.className} antialiased`}>
+        <LanguageProvider>
+          <ThemeProvider
+            attribute='class'
+            defaultTheme='system'
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </LanguageProvider>
       </body>
     </html>
   );
