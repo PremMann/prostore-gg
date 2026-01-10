@@ -55,7 +55,7 @@ const BioPage = () => {
         {
             icon: MapPin,
             label: t('links.directions'),
-            href: 'https://www.google.com/maps/@11.5038022,104.8744175,21z?entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
+            href: 'https://maps.app.goo.gl/u1yb2XLbDt46adSm8',
             color: 'bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-900 dark:hover:bg-zinc-600 text-white border-none'
         },
     ];
