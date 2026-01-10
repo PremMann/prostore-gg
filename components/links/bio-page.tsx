@@ -90,7 +90,7 @@ const BioPage = () => {
 
                     <div className="space-y-1">
                         <h1 className="text-2xl font-bold tracking-tight text-black dark:text-white">
-                            {APP_NAME}
+                            PROMELODY
                         </h1>
                         <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium max-w-[280px]">
                             {t('links.description')}

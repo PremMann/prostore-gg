@@ -271,7 +271,7 @@ export default function AdminDashboard() {
         <div className="flex h-full flex-col gap-4">
             <div className="flex h-14 items-center border-b px-6">
                 <Package className="mr-2 h-6 w-6 text-primary" />
-                <span className="text-lg font-bold tracking-tight">ProStore Admin</span>
+                <span className="text-lg font-bold tracking-tight">PROMELODY ADMIN</span>
             </div>
             <div className="flex-1 overflow-auto py-2">
                 <nav className="grid items-start px-4 text-sm font-medium">
