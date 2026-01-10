@@ -43,19 +43,19 @@ const BioPage = () => {
         {
             icon: Send,
             label: t('links.chat'),
-            href: 'https://t.me/yourusername',
+            href: 'https://t.me/promelodychannel',
             color: 'bg-blue-500 hover:bg-blue-600 text-white border-none'
         },
         {
             icon: Phone,
             label: t('links.call'),
-            href: 'tel:+85512345678',
+            href: 'tel:+855978601549',
             color: 'bg-green-500 hover:bg-green-600 text-white border-none'
         },
         {
             icon: MapPin,
             label: t('links.directions'),
-            href: 'https://maps.google.com',
+            href: 'https://www.google.com/maps/@11.5038022,104.8744175,21z?entry=ttu&g_ep=EgoyMDI2MDEwNy4wIKXMDSoASAFQAw%3D%3D',
             color: 'bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-900 dark:hover:bg-zinc-600 text-white border-none'
         },
     ];
