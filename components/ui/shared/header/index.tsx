@@ -12,8 +12,8 @@ const Header = () => {
         <div className='flex items-center gap-12'>
           <Link href='/' className='flex items-center'>
             <Image
-              src='/images/main.png'
-              alt={`${APP_NAME} logo`}
+              src='/images/gg.png'
+              alt='PROMELODY Logo'
               height={40}
               width={40}
               priority={true}

@@ -75,6 +75,7 @@ interface GetProductsParams {
     category?: string;
     sortBy?: 'name' | 'price' | 'rating' | 'createdAt';
     sortOrder?: 'asc' | 'desc';
+    price?: string; // Format: "min-max" e.g "100-500"
 }
 
 interface PaginationInfo {
@@ -93,6 +94,7 @@ export async function getAllProducts(params: GetProductsParams = {}) {
             category,
             sortBy = 'createdAt',
             sortOrder = 'desc',
+            price,
         } = params;
 
         const skip = (page - 1) * limit;
@@ -108,6 +110,19 @@ export async function getAllProducts(params: GetProductsParams = {}) {
                     { description: { contains: search, mode: 'insensitive' } },
                 ],
             });
+        }
+
+        // Price filter
+        if (price) {
+            const [min, max] = price.split('-').map(Number);
+            if (!isNaN(min) && !isNaN(max)) {
+                whereConditions.push({
+                    price: {
+                        gte: min,
+                        lte: max,
+                    },
+                });
+            }
         }
 
         // Category filter

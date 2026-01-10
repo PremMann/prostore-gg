@@ -8,10 +8,10 @@ const NotFoundPage = () => {
   return (
     <div className='flex flex-col items-center justify-center min-h-screen'>
       <Image
-        src='/images/logo.svg'
+        src='/images/gg.png'
         width={48}
         height={48}
-        alt={`${APP_NAME} logo`}
+        alt='PROMELODY Logo'
         priority={true}
       />
       <div className='p-6 w-1/3 rounded-lg shadow-md text-center'>

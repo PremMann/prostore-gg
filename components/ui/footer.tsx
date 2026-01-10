@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { APP_NAME } from '@/lib/constants';
 
 const footerLinks = {
@@ -31,7 +32,14 @@ const Footer = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-12 lg:gap-16">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="inline-block">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <Image
+                src="/images/gg.png"
+                alt="PROMELODY Logo"
+                width={40}
+                height={40}
+                className="object-contain"
+              />
               <span className="text-xl font-light tracking-wider uppercase text-black dark:text-white">
                 {APP_NAME}
               </span>
