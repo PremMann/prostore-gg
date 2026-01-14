@@ -11,7 +11,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { createProduct } from "@/lib/actions/product.actions";
+import { createProduct, updateProduct } from "@/lib/actions/product.actions";
 import { toast } from "sonner";
 import { insertProductSchema } from "@/lib/validators";
 import { Upload, X } from "lucide-react";
@@ -21,26 +21,28 @@ import { TagInput, SIZE_SUGGESTIONS, COLOR_SUGGESTIONS } from "@/components/ui/t
 // import { useRouter } from "next/navigation";
 export default function ProductForm({
     setOpen,
-    onSuccess
+    onSuccess,
+    product
 }: {
     setOpen: (open: boolean) => void;
     onSuccess?: () => void;
+    product?: any;
 }) {
     const [isLoading, setIsLoading] = useState(false);
     const [uploadingImages, setUploadingImages] = useState(false);
     const [formData, setFormData] = useState({
-        name: "",
-        slug: "",
-        category: "",
-        brand: "",
-        price: "",
-        stock: "",
-        description: "",
-        images: [] as string[],
-        isFeatured: false,
-        banner: "",
-        sizes: [] as string[],
-        colors: [] as string[],
+        name: product?.name || "",
+        slug: product?.slug || "",
+        category: product?.category || "",
+        brand: product?.brand || "",
+        price: product?.price || "",
+        stock: product?.stock?.toString() || "",
+        description: product?.description || "",
+        images: product?.images || [] as string[],
+        isFeatured: product?.isFeatured || false,
+        banner: product?.banner || "",
+        sizes: product?.sizes || [] as string[],
+        colors: product?.colors || [] as string[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -141,7 +143,7 @@ export default function ProductForm({
     const removeImage = (index: number) => {
         setFormData((prev) => ({
             ...prev,
-            images: prev.images.filter((_, i) => i !== index),
+            images: prev.images.filter((_: string, i: number) => i !== index),
         }));
     };
 
@@ -185,7 +187,9 @@ export default function ProductForm({
                 return;
             }
 
-            const result = await createProduct(parsed.data);
+            const result = product?.id
+                ? await updateProduct({ ...parsed.data, id: product.id })
+                : await createProduct(parsed.data);
 
             if (result.success) {
                 toast.success(result.message);
@@ -365,7 +369,7 @@ export default function ProductForm({
                 {/* Image Preview */}
                 {formData.images.length > 0 && (
                     <div className="grid grid-cols-4 gap-2 mt-2">
-                        {formData.images.map((url, index) => (
+                        {formData.images.map((url: string, index: number) => (
                             <div key={index} className="relative group">
                                 <Image
                                     src={url}
@@ -453,7 +457,7 @@ export default function ProductForm({
                     Cancel
                 </Button>
                 <Button type="submit" disabled={isLoading || uploadingImages}>
-                    {isLoading ? "Creating..." : "Create Product"}
+                    {isLoading ? (product?.id ? "Updating..." : "Creating...") : (product?.id ? "Update Product" : "Create Product")}
                 </Button>
             </div>
         </form>

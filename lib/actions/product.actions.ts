@@ -62,9 +62,10 @@ export async function getDealOfTheDay() {
 
 // Get single product by it's slug
 export async function getProductBySlug(slug: string) {
-    return await prisma.product.findFirst({
+    const product = await prisma.product.findFirst({
         where: { slug },
     });
+    return convertToPlainObject(product);
 }
 
 // Get all products for admin dashboard with pagination, search, and filtering
@@ -207,6 +208,58 @@ export async function createProduct(data: z.infer<typeof insertProductSchema>) {
         revalidatePath("/admin/dashboard");
 
         return { success: true, message: "Product created successfully" };
+    } catch (error) {
+        return { success: false, message: formatError(error) };
+    }
+}
+
+// Delete a product
+export async function deleteProduct(id: string) {
+    try {
+        const productExists = await prisma.product.findFirst({
+            where: { id },
+        });
+
+        if (!productExists) throw new Error("Product not found");
+
+        await prisma.product.delete({
+            where: { id },
+        });
+
+        revalidatePath("/admin/dashboard");
+
+        return {
+            success: true,
+            message: "Product deleted successfully",
+        };
+    } catch (error) {
+        return { success: false, message: formatError(error) };
+    }
+}
+
+// Update a product
+export async function updateProduct(data: z.infer<typeof insertProductSchema> & { id: string }) {
+    try {
+        const product = insertProductSchema.parse(data);
+        const { id } = data;
+
+        const productExists = await prisma.product.findFirst({
+            where: { id },
+        });
+
+        if (!productExists) throw new Error("Product not found");
+
+        await prisma.product.update({
+            where: { id },
+            data: product,
+        });
+
+        revalidatePath("/admin/dashboard");
+
+        return {
+            success: true,
+            message: "Product updated successfully",
+        };
     } catch (error) {
         return { success: false, message: formatError(error) };
     }

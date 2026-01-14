@@ -44,8 +44,11 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
+    DialogFooter,
 } from "@/components/ui/dialog";
 import ProductForm from "./product-form";
+import { deleteProduct, getAllProducts, getAllCategories } from "@/lib/actions/product.actions";
+import { getAllUsers } from "@/lib/actions/user.actions";
 
 // --- Mock Data ---
 
@@ -142,6 +145,9 @@ export default function AdminDashboard() {
     const [productSortOrder, setProductSortOrder] = useState<'asc' | 'desc'>('desc');
     const [categories, setCategories] = useState<string[]>([]);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [productToDelete, setProductToDelete] = useState<string | null>(null);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
@@ -154,7 +160,6 @@ export default function AdminDashboard() {
             if (activeTab === "users") {
                 setIsLoading(true);
                 try {
-                    const { getAllUsers } = await import("@/lib/actions/user.actions");
                     const result = await getAllUsers({
                         page,
                         limit,
@@ -186,8 +191,6 @@ export default function AdminDashboard() {
             if (activeTab === "products") {
                 setIsLoading(true);
                 try {
-                    const { getAllProducts, getAllCategories } = await import("@/lib/actions/product.actions");
-
                     // Fetch categories if not already loaded
                     if (categories.length === 0) {
                         const catResult = await getAllCategories();
@@ -237,12 +240,37 @@ export default function AdminDashboard() {
         toast.success("User deleted successfully");
     };
 
+    const handleDeleteProduct = async () => {
+        if (!productToDelete) return;
+
+        setIsLoading(true);
+        try {
+            const result = await deleteProduct(productToDelete);
+            if (result.success) {
+                toast.success(result.message);
+                setIsDeleteDialogOpen(false);
+                setProductToDelete(null);
+                await refreshProducts();
+            } else {
+                toast.error(result.message);
+            }
+        } catch (error) {
+            toast.error("An error occurred while deleting the product");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const confirmDelete = (id: string) => {
+        setProductToDelete(id);
+        setIsDeleteDialogOpen(true);
+    };
+
     // Refresh products after adding a new product
     const refreshProducts = async () => {
         if (activeTab === "products") {
             setIsLoading(true);
             try {
-                const { getAllProducts } = await import("@/lib/actions/product.actions");
                 const result = await getAllProducts({
                     page: productPage,
                     limit,
@@ -626,21 +654,47 @@ export default function AdminDashboard() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Products Management</CardTitle>
-                                <Dialog open={isProductModalOpen} onOpenChange={setIsProductModalOpen}>
+                                <Dialog open={isProductModalOpen} onOpenChange={(open) => {
+                                    setIsProductModalOpen(open);
+                                    if (!open) setEditingProduct(null);
+                                }}>
                                     <DialogTrigger asChild>
-                                        <Button>
+                                        <Button onClick={() => setEditingProduct(null)}>
                                             <Package className="mr-2 h-4 w-4" />
                                             Add Product
                                         </Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                                         <DialogHeader>
-                                            <DialogTitle>Add New Product</DialogTitle>
+                                            <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
                                             <DialogDescription>
-                                                Fill in the details below to create a new product.
+                                                {editingProduct ? "Update product details below." : "Fill in the details below to create a new product."}
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <ProductForm setOpen={setIsProductModalOpen} onSuccess={refreshProducts} />
+                                        <ProductForm setOpen={setIsProductModalOpen} onSuccess={refreshProducts} product={editingProduct} />
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Delete Confirmation Dialog */}
+                                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle className="flex items-center gap-2 text-red-600">
+                                                <AlertTriangle className="h-5 w-5" />
+                                                Confirm Deletion
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Are you sure you want to delete this product? This action cannot be undone and will permanently remove the product from the catalog.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter className="gap-2 sm:gap-0">
+                                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button variant="destructive" onClick={handleDeleteProduct} disabled={isLoading}>
+                                                {isLoading ? "Deleting..." : "Delete Product"}
+                                            </Button>
+                                        </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
                             </CardHeader>
@@ -749,11 +803,14 @@ export default function AdminDashboard() {
                                                                     </DropdownMenuTrigger>
                                                                     <DropdownMenuContent align="end">
                                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                        <DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => {
+                                                                            setEditingProduct(product);
+                                                                            setIsProductModalOpen(true);
+                                                                        }}>
                                                                             <Edit className="mr-2 h-4 w-4" /> Edit
                                                                         </DropdownMenuItem>
                                                                         <DropdownMenuSeparator />
-                                                                        <DropdownMenuItem className="text-red-600">
+                                                                        <DropdownMenuItem className="text-red-600" onClick={() => confirmDelete(product.id)}>
                                                                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                         </DropdownMenuItem>
                                                                     </DropdownMenuContent>
