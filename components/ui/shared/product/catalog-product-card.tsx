@@ -6,19 +6,13 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import ProductPrice from './product-price';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { addToCart } from '@/lib/actions/cart.actions';
-import { toast } from 'sonner';
-import { useTransition, useState, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Check, Heart } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { useRouter } from 'next/navigation';
 import { useFavorites } from '@/components/catalog/favorites-context';
 import { useLanguage } from '@/components/catalog/language-context';
-import { Heart } from 'lucide-react';
 
 const CatalogProductCard = ({ product }: { product: Product }) => {
-    const [isPending, startTransition] = useTransition();
-    const router = useRouter();
     const { favorites, toggleFavorite } = useFavorites();
     const { t } = useLanguage();
     const [selectedColor, setSelectedColor] = useState<string>('');
@@ -26,66 +20,8 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     const isFavorite = favorites.includes(product.slug);
-
     const hasColors = product.colors && product.colors.length > 0;
 
-    const handleAddToCart = (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent Link navigation
-
-        // Validation: Check if color is required but not selected
-        if (hasColors && !selectedColor) {
-            toast.error(t('product.select_color'));
-            return;
-        }
-
-        // If product has SIZES (which we aren't selecting here), we might still need to go to details.
-        // However, the prompt specifically asked to "bypass" functionality if color is picked.
-        // If sizes exist, we usually default to the first one or require selection. 
-        // To strictly follow "Add directly to cart", we will just not set a size (or set undefined) 
-        // and let the backend/cart handle it, OR if sizes are mandatory, we might be forced to redirect.
-        // Assuming for this "Catalog" view we want speed, we'll try to add.
-
-        // NOTE: Refined logic - IF sizes exist and aren't picked, maybe we still default to details? 
-        // But the prompt was strong about "Cart Integration". 
-        // Let's check logic: if sizes exist, redirecting is safer. 
-        // BUT the prompt implies if I pick a COLOR, I can add. 
-        // I will try to add. If the user cares about size, they usually check details.
-
-        if (product.sizes && product.sizes.length > 0) {
-            // Fallback: If sizes exist, we can't reliably guess size. 
-            // But the prompt says "bypass". I will assume standard size 'M' or just add without size if allowed?
-            // Let's redirect if Size is needed to avoid bad UX defined by "Standard".
-            // BUT, strictly following: "Cart Integration... bypass need to visit details page". 
-            // I'll assume we can add without size or default to first.
-            // Let's assume we redirect ONLY if sizing is critical and missing, 
-            // but for this specific request about Color, I'll allow adding.
-            // Actually, let's redirect if sizes exist, as that's physically impossible to key in here.
-            router.push(`/product/${product.slug}`);
-            return;
-        }
-
-        startTransition(async () => {
-            const item = {
-                productId: product.id,
-                name: product.name,
-                slug: product.slug,
-                price: product.price.toString(),
-                qty: 1,
-                image: product.images[0],
-                color: selectedColor || undefined,
-            };
-
-            const res = await addToCart(item);
-            if (res.success) {
-                toast.success(`${product.name} ${t('product.added')}`);
-            } else {
-                toast.error(res.message);
-            }
-        });
-    };
-
-
-    // ... (keep scrollImage/handleScroll logic)
     const scrollImage = (direction: 'left' | 'right') => {
         if (!scrollContainerRef.current) return;
 
@@ -96,7 +32,6 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
         container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     };
 
-    // Track scroll position to update dots
     const handleScroll = () => {
         if (!scrollContainerRef.current) return;
         const container = scrollContainerRef.current;
@@ -136,7 +71,7 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
                     ))}
                 </div>
 
-                {/* Carousel Navigation Arrows (visible on hover) */}
+                {/* Carousel Navigation Arrows */}
                 {product.images.length > 1 && (
                     <>
                         <button
@@ -179,18 +114,15 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
 
             {/* Content */}
             <CardContent className="p-4 flex flex-col gap-3 flex-1">
-                {/* Brand (Replaces Title) */}
                 <div className="text-xs font-medium text-zinc-900 dark:text-zinc-100 uppercase tracking-wide">
                     {product.brand}
                 </div>
 
-                {/* Price & Colors */}
                 <div className="mt-auto space-y-3">
                     <div className="text-lg font-bold text-zinc-900 dark:text-zinc-50">
                         <ProductPrice value={Number(product.price)} />
                     </div>
 
-                    {/* Color Selection Swatches */}
                     {hasColors && (
                         <div className="flex flex-wrap gap-2">
                             {product.colors.map((color) => (
@@ -238,6 +170,5 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
         </Card>
     );
 };
-
 
 export default CatalogProductCard;

@@ -49,6 +49,7 @@ import {
 import ProductForm from "./product-form";
 import { deleteProduct, getAllProducts, getAllCategories } from "@/lib/actions/product.actions";
 import { getAllUsers } from "@/lib/actions/user.actions";
+import { Product, User } from "@/types";
 
 // --- Mock Data ---
 
@@ -91,28 +92,6 @@ const RECENT_ACTIVITY = [
     { id: "USR-5541", name: "Evan Wright", email: "evan@example.com", date: "2024-03-12" },
 ];
 
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    image: string | null;
-    createdAt: Date;
-    phoneNumber: string | null;
-    emailVerified: Date | null;
-}
-
-interface Product {
-    id: string;
-    name: string;
-    slug: string;
-    category: string;
-    price: string; // Decimal is returned as string/number usually, check convertToPlainObject
-    stock: number;
-    rating: string;
-    createdAt: Date;
-    images: string[];
-}
 
 // --- Main Admin Dashboard Component ---
 
@@ -254,7 +233,7 @@ export default function AdminDashboard() {
             } else {
                 toast.error(result.message);
             }
-        } catch (error) {
+        } catch {
             toast.error("An error occurred while deleting the product");
         } finally {
             setIsLoading(false);
