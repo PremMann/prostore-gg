@@ -34,9 +34,9 @@ const BioPage = () => {
     };
 
     const socialLinks = [
-        { icon: Facebook, href: 'https://facebook.com', label: 'Facebook' },
-        { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
-        { icon: Globe, href: 'https://tiktok.com', label: 'TikTok' }, // Using Globe as placeholder for TikTok if not available in this lucide version
+        { icon: Facebook, href: 'https://www.facebook.com/profile.php?id=61585745722301', label: 'Facebook' },
+        { icon: Instagram, href: 'https://www.instagram.com/mann_premm/', label: 'Instagram' },
+        { icon: Globe, href: 'https://www.tiktok.com/@promelodyyy', label: 'TikTok' },
     ];
 
     const mainActions = [
@@ -55,7 +55,7 @@ const BioPage = () => {
         {
             icon: MapPin,
             label: t('links.directions'),
-            href: 'https://maps.app.goo.gl/u1yb2XLbDt46adSm8',
+            href: 'https://maps.app.goo.gl/acGgknQkMbRbX9tdA',
             color: 'bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-900 dark:hover:bg-zinc-600 text-white border-none'
         },
     ];
