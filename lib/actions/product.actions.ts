@@ -65,7 +65,27 @@ export async function getProductBySlug(slug: string) {
     const product = await prisma.product.findFirst({
         where: { slug },
     });
-    return convertToPlainObject(product);
+    if (!product) return null;
+
+    // Explicit return of a new object literal to strip any hidden Prisma symbols
+    return {
+        id: product.id,
+        name: product.name,
+        slug: product.slug,
+        category: product.category,
+        images: product.images,
+        brand: product.brand,
+        description: product.description,
+        stock: product.stock,
+        price: product.price.toString(),
+        rating: product.rating.toString(),
+        numReviews: product.numReviews,
+        isFeatured: product.isFeatured,
+        banner: product.banner,
+        createdAt: product.createdAt,
+        sizes: product.sizes,
+        colors: product.colors,
+    };
 }
 
 // Get all products for admin dashboard with pagination, search, and filtering

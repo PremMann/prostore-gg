@@ -10,3 +10,14 @@ export type Product = z.infer<typeof insertProductSchema> & {
 
 export type Cart = z.infer<typeof insertCartSchema>;
 export type CartItem = z.infer<typeof cartItemSchema>;
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  image: string | null;
+  createdAt: Date;
+  phoneNumber: string | null;
+  emailVerified: Date | null;
+}

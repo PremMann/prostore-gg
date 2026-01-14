@@ -14,6 +14,7 @@ import {
 import { createProduct, updateProduct } from "@/lib/actions/product.actions";
 import { toast } from "sonner";
 import { insertProductSchema } from "@/lib/validators";
+import { Product } from "@/types";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -26,7 +27,7 @@ export default function ProductForm({
 }: {
     setOpen: (open: boolean) => void;
     onSuccess?: () => void;
-    product?: any;
+    product?: Product | null;
 }) {
     const [isLoading, setIsLoading] = useState(false);
     const [uploadingImages, setUploadingImages] = useState(false);
