@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Facebook, Instagram, Phone, MapPin, Send, Globe, ShoppingBag } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { APP_NAME } from '@/lib/constants';
+import { APP_NAME, TELEGRAM_SUPPORT_URL } from '@/lib/constants';
 import ModeToggle from '@/components/ui/shared/header/mode-toggle';
 import LanguageToggle from '@/components/ui/shared/header/language-toggle';
 
@@ -43,7 +43,7 @@ const BioPage = () => {
         {
             icon: Send,
             label: t('links.chat'),
-            href: 'https://t.me/promelodychannel',
+            href: TELEGRAM_SUPPORT_URL,
             color: 'bg-blue-500 hover:bg-blue-600 text-white border-none'
         },
         {

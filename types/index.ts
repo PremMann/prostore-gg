@@ -3,6 +3,7 @@ import { insertProductSchema, insertCartSchema, cartItemSchema } from '@/lib/val
 
 export type Product = z.infer<typeof insertProductSchema> & {
   id: string;
+  productCode?: string | null; // Allow null to match Prisma's optional String?
   rating: string;
   numReviews: number;
   createdAt: Date;
