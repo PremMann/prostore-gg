@@ -34,6 +34,7 @@ export default function ProductForm({
     const [formData, setFormData] = useState({
         name: product?.name || "",
         slug: product?.slug || "",
+        productCode: product?.productCode || "",
         category: product?.category || "",
         brand: product?.brand || "",
         price: product?.price || "",
@@ -162,6 +163,7 @@ export default function ProductForm({
             const productData = {
                 name: formData.name,
                 slug: formData.slug,
+                productCode: formData.productCode,
                 category: formData.category,
                 brand: formData.brand,
                 description: formData.description,
@@ -239,6 +241,17 @@ export default function ProductForm({
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                    <Label htmlFor="productCode">Product Code (SKU)</Label>
+                    <Input
+                        id="productCode"
+                        name="productCode"
+                        value={formData.productCode}
+                        onChange={handleChange}
+                        placeholder="e.g. JEANS-001"
+                    />
+                    {errors.productCode && <p className="text-sm text-red-500">{errors.productCode}</p>}
+                </div>
+                <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
                     <Select
                         value={formData.category}
@@ -266,6 +279,9 @@ export default function ProductForm({
                     </Select>
                     {errors.category && <p className="text-sm text-red-500">{errors.category}</p>}
                 </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="brand">Brand</Label>
                     <Input
@@ -461,6 +477,6 @@ export default function ProductForm({
                     {isLoading ? (product?.id ? "Updating..." : "Creating...") : (product?.id ? "Update Product" : "Create Product")}
                 </Button>
             </div>
-        </form>
+        </form >
     );
 }
