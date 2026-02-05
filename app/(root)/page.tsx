@@ -5,52 +5,22 @@ export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import ProductList from "@/components/ui/shared/product/product-list";
 import ProductListSkeleton from "@/components/ui/shared/product/product-list-skeleton";
-// import HeroSection from "@/components/ui/shared/home/hero-section";
-// import FeaturesSection from "@/components/ui/shared/home/features-section";
-import {
-  getLatestProducts,
-  getFeaturedProducts,
-  getBestSellers
-} from "@/lib/actions/product.actions";
+import { getAllProducts } from "@/lib/actions/product.actions";
 
-// Async component for Featured Products
-async function FeaturedProducts() {
-  const featuredProducts = await getFeaturedProducts(4);
+// Async component for All Products
+async function AllProductsSection() {
+  const result = await getAllProducts({
+    limit: 100, // Show many products on homepage
+    sortBy: 'createdAt',
+    sortOrder: 'desc'
+  });
+
+  const products = result.success && result.data ? result.data.products : [];
+
   return (
     <ProductList
-      data={featuredProducts}
-      title="Featured"
-      limit={4}
-      viewAllLink="/search?sort=rating"
-      viewAllText="View All"
-    />
-  );
-}
-
-// Async component for Best Sellers
-async function BestSellersSection() {
-  const bestSellers = await getBestSellers(4);
-  return (
-    <ProductList
-      data={bestSellers}
-      title="Best Sellers"
-      limit={4}
-      viewAllLink="/search?sort=popular"
-      viewAllText="View All"
-    />
-  );
-}
-
-// Async component for New Arrivals
-async function NewArrivalsSection() {
-  const latestProducts = await getLatestProducts();
-  return (
-    <ProductList
-      data={latestProducts}
-      title="New Arrivals"
-      limit={8}
-      viewAllLink="/search?sort=newest"
-      viewAllText="View All"
+      data={products}
+      limit={100}
     />
   );
 }
@@ -58,26 +28,9 @@ async function NewArrivalsSection() {
 const Homepage = async () => {
   return (
     <div className="bg-white dark:bg-black">
-      {/* Hero Section - Hidden */}
-      {/* <HeroSection /> */}
-
-
-      {/* Trust Features Strip */}
-      {/* <FeaturesSection /> */}
-
-      {/* Featured Products */}
+      {/* All Products */}
       <Suspense fallback={<ProductListSkeleton />}>
-        <FeaturedProducts />
-      </Suspense>
-
-      {/* New Arrivals */}
-      <Suspense fallback={<ProductListSkeleton />}>
-        <NewArrivalsSection />
-      </Suspense>
-
-      {/* Best Sellers */}
-      <Suspense fallback={<ProductListSkeleton />}>
-        <BestSellersSection />
+        <AllProductsSection />
       </Suspense>
     </div>
   );

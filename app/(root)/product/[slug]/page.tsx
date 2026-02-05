@@ -1,13 +1,10 @@
 import { getProductBySlug } from "@/lib/actions/product.actions";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import ProductPrice from "@/components/ui/shared/product/product-price";
 import ProductImages from "@/components/ui/shared/product/product-images";
 import AddToCart from "@/components/ui/shared/product/add-to-cart";
-
-
-
+import TelegramChatButton from "@/components/ui/shared/product/telegram-chat-button";
 import { Product } from "@/types";
 
 const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) => {
@@ -23,77 +20,88 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
 
   return (
     <>
-      <section className="py-6">
-        <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
-          {/* Images Column */}
-          <div className='lg:col-span-2'>
+      <section className="py-8 lg:py-12">
+        <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12'>
+          {/* Left Column - Product Images (60% on desktop) */}
+          <div className='lg:pr-8'>
             <ProductImages images={product.images} />
           </div>
 
-          {/* Details Column */}
-          <div className='lg:col-span-2 space-y-6'>
-            <div className='flex flex-col gap-4'>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{product.brand}</span>
-                <span>•</span>
-                <span>{product.category}</span>
-              </div>
-
-              <h1 className='h2-bold'>{product.name}</h1>
-
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1">
-                  <span className="text-lg font-semibold">{product.rating}</span>
-                  <span className="text-muted-foreground">★</span>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  ({product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'})
-                </span>
-              </div>
-
-              <div className='flex flex-col sm:flex-row sm:items-center gap-3'>
-                <ProductPrice
-                  value={Number(product.price)}
-                  className='text-2xl font-bold'
-                />
-              </div>
-
-
+          {/* Right Column - Product Details (40% on desktop) */}
+          <div className='space-y-6'>
+            {/* Brand & Category */}
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{product.brand}</span>
+              <span>•</span>
+              <span>{product.category}</span>
             </div>
 
-            <div className='border-t pt-6'>
-              <h2 className='font-semibold text-lg mb-3'>Description</h2>
-              <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+            {/* Product Name */}
+            <h1 className='text-3xl lg:text-4xl font-bold tracking-tight'>{product.name}</h1>
+
+            {/* Product Code */}
+            {product.productCode && (
+              <div className="text-sm text-muted-foreground">
+                SKU: <span className="font-mono">{product.productCode}</span>
+              </div>
+            )}
+
+            {/* Price */}
+            <div className='flex items-baseline gap-3'>
+              <ProductPrice
+                value={Number(product.price)}
+                className='text-3xl lg:text-4xl font-bold'
+              />
             </div>
-          </div>
 
-          {/* Action Column */}
-          <div className='lg:col-span-1'>
-            <Card className="sticky top-4">
-              <CardContent className='p-6 space-y-4'>
-                <div className='flex justify-between items-center'>
-                  <span className="text-muted-foreground">Price</span>
-                  <ProductPrice value={Number(product.price)} className="text-xl font-bold" />
-                </div>
+            {/* Rating & Reviews */}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <span className="text-xl font-semibold">{product.rating}</span>
+                <span className="text-yellow-500 text-xl">★</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                ({product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'})
+              </span>
+            </div>
 
-                <div className='flex justify-between items-center'>
-                  <span className="text-muted-foreground">Status</span>
-                  {product.stock > 0 ? (
-                    <Badge variant='outline' className="bg-green-50 text-green-700 border-green-200">
-                      In Stock ({product.stock})
-                    </Badge>
-                  ) : (
-                    <Badge variant='destructive'>Out Of Stock</Badge>
-                  )}
-                </div>
+            {/* Stock Status */}
+            <div className='flex items-center gap-3'>
+              <span className="text-sm font-medium text-muted-foreground">Status:</span>
+              {product.stock > 0 ? (
+                <Badge variant='outline' className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
+                  In Stock ({product.stock} available)
+                </Badge>
+              ) : (
+                <Badge variant='destructive'>Out Of Stock</Badge>
+              )}
+            </div>
 
-                {product.stock > 0 && (
-                  <div className='pt-4 border-t'>
-                    <AddToCart product={product} />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="border-t" />
+
+            {/* Add to Cart Section */}
+            {product.stock > 0 && (
+              <div className='space-y-4'>
+                <AddToCart product={product} />
+                <TelegramChatButton product={product} />
+              </div>
+            )}
+
+            {product.stock < 1 && (
+              <div className='space-y-4'>
+                <TelegramChatButton product={product} />
+              </div>
+            )}
+
+            <div className="border-t" />
+
+            {/* Description */}
+            <div className='space-y-3'>
+              <h2 className='text-xl font-semibold'>Description</h2>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+                {product.description}
+              </p>
+            </div>
           </div>
         </div>
       </section>

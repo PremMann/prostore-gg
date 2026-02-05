@@ -2,7 +2,7 @@ export const runtime = "nodejs";
 
 import Header from "@/components/ui/shared/header";
 import Footer from "@/components/ui/footer";
-import TelegramWidget from "@/components/ui/telegram-widget";
+// import TelegramWidget from "@/components/ui/telegram-widget"; // Removed
 
 export default function RootLayout({
   children,
@@ -16,7 +16,6 @@ export default function RootLayout({
         {children}
       </main>
       <Footer />
-      <TelegramWidget />
     </div>
   );
 }

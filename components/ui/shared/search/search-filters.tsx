@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Input } from '@/components/ui/input';
-import { Search, X, ChevronRight } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useState } from 'react';
-import { PRODUCT_CATEGORIES, getParentCategory, isMainCategory } from '@/lib/constants';
+import { PRODUCT_CATEGORIES } from '@/lib/constants';
 
 interface SearchFiltersProps {
     currentCategory?: string;
@@ -15,14 +15,6 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
     const router = useRouter();
     const searchParams = useSearchParams();
     const [searchInput, setSearchInput] = useState(currentSearch || '');
-    const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
-
-    // Determine the current main category context
-    const currentMainCategory = currentCategory
-        ? (isMainCategory(currentCategory)
-            ? currentCategory
-            : getParentCategory(currentCategory)?.value)
-        : undefined;
 
     const handleCategoryClick = (category: string) => {
         const params = new URLSearchParams(searchParams.toString());
@@ -46,7 +38,7 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
         } else {
             params.delete('search');
         }
-        params.delete('page'); // Reset to page 1
+        params.delete('page');
 
         router.push(`/search?${params.toString()}`);
     };
@@ -56,25 +48,11 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
         router.push('/search');
     };
 
-    const toggleCategory = (categoryValue: string) => {
-        setExpandedCategories(prev =>
-            prev.includes(categoryValue)
-                ? prev.filter(c => c !== categoryValue)
-                : [...prev, categoryValue]
-        );
-    };
-
     const hasActiveFilters = currentCategory || currentSearch;
 
-    // Get display name for category
     const getCategoryDisplayName = (categoryValue: string) => {
-        const mainCat = PRODUCT_CATEGORIES.find(cat => cat.value === categoryValue);
-        if (mainCat) return mainCat.name;
-
-        for (const mainCat of PRODUCT_CATEGORIES) {
-            const subCat = mainCat.subcategories?.find(sub => sub.value === categoryValue);
-            if (subCat) return subCat.name;
-        }
+        const cat = PRODUCT_CATEGORIES.find(c => c.value === categoryValue);
+        if (cat) return cat.name;
 
         return categoryValue.split('-').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1)
@@ -99,14 +77,6 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
                             className="pl-6 h-10 border-0 border-b border-zinc-200 dark:border-zinc-800 rounded-none bg-transparent focus:border-black dark:focus:border-white focus-visible:ring-0 text-sm"
                         />
                     </div>
-                    {searchInput && (
-                        <button
-                            type="submit"
-                            className="w-full h-10 bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide uppercase transition-all hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                        >
-                            Search
-                        </button>
-                    )}
                 </form>
             </div>
 
@@ -120,71 +90,27 @@ const SearchFilters = ({ currentCategory, currentSearch }: SearchFiltersProps) =
                     {/* Show All Products Option */}
                     <button
                         onClick={() => handleCategoryClick('')}
-                        className={`w-full text-left py-2 text-sm transition-all ${
-                            !currentCategory
+                        className={`w-full text-left py-2 text-sm transition-all ${!currentCategory
                                 ? 'text-black dark:text-white font-medium border-b border-black dark:border-white'
                                 : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-                        }`}
+                            }`}
                     >
                         All Products
                     </button>
 
-                    {/* Main Categories with Subcategories */}
-                    {PRODUCT_CATEGORIES.map((mainCat) => {
-                        const isExpanded = expandedCategories.includes(mainCat.value) || currentMainCategory === mainCat.value;
-                        const isActive = currentCategory === mainCat.value;
-                        const hasActiveSubcategory = currentMainCategory === mainCat.value && currentCategory !== mainCat.value;
-
-                        return (
-                            <div key={mainCat.value} className="space-y-1">
-                                {/* Main Category */}
-                                <div className="flex items-center justify-between group">
-                                    <button
-                                        onClick={() => handleCategoryClick(mainCat.value)}
-                                        className={`flex-1 text-left py-2 text-sm transition-all ${
-                                            isActive
-                                                ? 'text-black dark:text-white font-medium border-b border-black dark:border-white'
-                                                : hasActiveSubcategory
-                                                    ? 'text-black dark:text-white'
-                                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
-                                        }`}
-                                    >
-                                        {mainCat.name}
-                                    </button>
-                                    {mainCat.subcategories && mainCat.subcategories.length > 0 && (
-                                        <button
-                                            onClick={() => toggleCategory(mainCat.value)}
-                                            className="p-2 text-zinc-400 dark:text-zinc-600 hover:text-black dark:hover:text-white transition-colors"
-                                        >
-                                            <ChevronRight className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Subcategories */}
-                                {isExpanded && mainCat.subcategories && mainCat.subcategories.length > 0 && (
-                                    <div className="ml-4 pl-3 border-l border-zinc-200 dark:border-zinc-800 space-y-1 py-1">
-                                        {mainCat.subcategories.map((subCat) => {
-                                            const isSubActive = currentCategory === subCat.value;
-                                            return (
-                                                <button
-                                                    key={subCat.value}
-                                                    onClick={() => handleCategoryClick(subCat.value)}
-                                                    className={`w-full text-left py-1.5 text-xs transition-all ${
-                                                        isSubActive
-                                                            ? 'text-black dark:text-white font-medium'
-                                                            : 'text-zinc-500 dark:text-zinc-500 hover:text-black dark:hover:text-white'
-                                                    }`}
-                                                >
-                                                    {subCat.name}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+                    {/* Simplified Categories */}
+                    {PRODUCT_CATEGORIES.map((cat) => (
+                        <button
+                            key={cat.value}
+                            onClick={() => handleCategoryClick(cat.value)}
+                            className={`w-full text-left py-2 text-sm transition-all ${currentCategory === cat.value
+                                    ? 'text-black dark:text-white font-medium border-b border-black dark:border-white'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-black dark:hover:text-white'
+                                }`}
+                        >
+                            {cat.name}
+                        </button>
+                    ))}
                 </div>
             </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,8 +17,8 @@ import { insertProductSchema } from "@/lib/validators";
 import { Product } from "@/types";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
-import { PRODUCT_CATEGORIES } from "@/lib/constants";
-import { TagInput, SIZE_SUGGESTIONS, COLOR_SUGGESTIONS } from "@/components/ui/tag-input";
+import { PRODUCT_CATEGORIES, getSizesForCategory } from "@/lib/constants";
+import { TagInput, COLOR_SUGGESTIONS } from "@/components/ui/tag-input";
 // import { useRouter } from "next/navigation";
 export default function ProductForm({
     setOpen,
@@ -255,25 +255,22 @@ export default function ProductForm({
                     <Label htmlFor="category">Category</Label>
                     <Select
                         value={formData.category}
-                        onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, category: value }))
-                        }
+                        onValueChange={(value) => {
+                            setFormData((prev) => ({
+                                ...prev,
+                                category: value,
+                                sizes: [] // Clear sizes when category changes
+                            }));
+                        }}
                     >
                         <SelectTrigger id="category">
                             <SelectValue placeholder="Select a category" />
                         </SelectTrigger>
                         <SelectContent>
                             {PRODUCT_CATEGORIES.map((category) => (
-                                <Fragment key={category.value}>
-                                    <SelectItem value={category.value} className="font-bold">
-                                        {category.name}
-                                    </SelectItem>
-                                    {category.subcategories?.map((sub) => (
-                                        <SelectItem key={sub.value} value={sub.value} className="pl-8 text-muted-foreground">
-                                            {sub.name}
-                                        </SelectItem>
-                                    ))}
-                                </Fragment>
+                                <SelectItem key={category.value} value={category.value}>
+                                    {category.name}
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -326,12 +323,19 @@ export default function ProductForm({
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label htmlFor="sizes">Sizes</Label>
+                    <Label htmlFor="sizes">
+                        Sizes
+                        {formData.category && (
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">
+                                ({formData.category === 'pants' ? 'Waist sizes' : 'Standard sizes'})
+                            </span>
+                        )}
+                    </Label>
                     <TagInput
                         value={formData.sizes}
                         onChange={(sizes) => setFormData((prev) => ({ ...prev, sizes }))}
-                        placeholder="Type size and press Enter"
-                        suggestions={SIZE_SUGGESTIONS}
+                        placeholder={formData.category ? `Select ${formData.category} sizes` : "Select category first"}
+                        suggestions={getSizesForCategory(formData.category)}
                     />
                 </div>
                 <div className="space-y-2">
