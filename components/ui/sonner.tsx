@@ -5,11 +5,22 @@ import { Toaster as Sonner } from "sonner"
 
 type ToasterProps = React.ComponentProps<typeof Sonner>
 
+import { useEffect, useState } from "react"
+
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768) // md breakpoint
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <Sonner
+      position={isMobile ? "top-right" : "bottom-right"}
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
       toastOptions={{

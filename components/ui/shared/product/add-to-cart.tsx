@@ -1,28 +1,20 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { addToCart } from '@/lib/actions/cart.actions';
-import { CartItem, Product } from '@/types';
+import { Product } from '@/types';
 import { Loader, Plus } from 'lucide-react';
-import { useTransition, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useCart } from '@/components/cart/cart-context';
 
 export default function AddToCart({ product }: { product: Product }) {
-    const [isPending, startTransition] = useTransition();
+    const { addItem } = useCart();
+    const [isLoading, setIsLoading] = useState(false);
     const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || '');
     const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0] || '');
 
-    // Check if item exists in cart (requires fetching cart on client or passing it)
-    // For simplicity in this specialized component, we'll optimistically assume Add mode 
-    // UNLESS we fetch cart. 
-    // To keep it responsive, simple "Add to Cart" is best.
-    // If the user matches size/color, we could show +/-. 
-    // Let's implement simple Add first. A robust e-commerce usually just adds (+) or shows error.
-
-    // Actually, to show toast "Success", we just call action.
-
-    const handleAddToCart = () => {
+    const handleAddToCart = async () => {
         if (product.sizes.length > 0 && !selectedSize) {
             toast.error('Please select a size');
             return;
@@ -32,25 +24,27 @@ export default function AddToCart({ product }: { product: Product }) {
             return;
         }
 
-        startTransition(async () => {
-            const item: CartItem = {
-                productId: product.id,
-                name: product.name,
-                slug: product.slug,
-                price: product.price.toString(), // Convert Decimal to string
-                qty: 1,
-                image: product.images[0],
-                size: selectedSize || undefined,
-                color: selectedColor || undefined,
-            };
+        setIsLoading(true);
 
-            const res = await addToCart(item);
-            if (res.success) {
-                toast.success(res.message);
-            } else {
-                toast.error(res.message);
-            }
+        // Add item to guest cart (localStorage)
+        const result = addItem({
+            productId: product.id,
+            name: product.name,
+            slug: product.slug,
+            price: product.price.toString(),
+            qty: 1,
+            image: product.images[0],
+            size: selectedSize || undefined,
+            color: selectedColor || undefined,
         });
+
+        if (result.success) {
+            toast.success(result.message);
+        } else {
+            toast.error(result.message);
+        }
+
+        setIsLoading(false);
     };
 
     return (
@@ -104,9 +98,9 @@ export default function AddToCart({ product }: { product: Product }) {
                 <Button
                     className="w-full h-12 text-lg"
                     onClick={handleAddToCart}
-                    disabled={isPending || product.stock < 1}
+                    disabled={isLoading || product.stock < 1}
                 >
-                    {isPending ? (
+                    {isLoading ? (
                         <Loader className="w-5 h-5 animate-spin mr-2" />
                     ) : (
                         <Plus className="w-5 h-5 mr-2" />

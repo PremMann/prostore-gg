@@ -6,6 +6,8 @@ import { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 import { Toaster } from '@/components/ui/sonner';
 import { LanguageProvider } from '@/components/catalog/language-context';
+import { CartProvider } from '@/components/cart/cart-context';
+import MobileCartDrawer from '@/components/cart/mobile-cart-drawer';
 
 const inter = Inter({
   subsets: ["latin"],
@@ -31,17 +33,21 @@ export default function RootLayout({
     <html lang='en' suppressHydrationWarning>
       <body className={`${inter.className} antialiased`}>
         <LanguageProvider>
-          <ThemeProvider
-            attribute='class'
-            defaultTheme='system'
-            enableSystem
-            disableTransitionOnChange
-          >
-            {children}
-            <Toaster />
-          </ThemeProvider>
+          <CartProvider>
+            <ThemeProvider
+              attribute='class'
+              defaultTheme='dark'
+              enableSystem
+              disableTransitionOnChange
+            >
+              {children}
+              <MobileCartDrawer />
+              <Toaster />
+            </ThemeProvider>
+          </CartProvider>
         </LanguageProvider>
       </body>
     </html>
   );
 }
+

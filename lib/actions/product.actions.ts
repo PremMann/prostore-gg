@@ -1,7 +1,7 @@
 "use server"
 import { prisma } from "@/db/prisma";
 import { convertToPlainObject, formatError } from "../utils";
-import { LATEST_PRODUCTS_LIMIT, getSubcategories } from "../constants";
+import { LATEST_PRODUCTS_LIMIT } from "../constants";
 import { insertProductSchema } from "../validators";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -148,14 +148,7 @@ export async function getAllProducts(params: GetProductsParams = {}) {
 
         // Category filter
         if (category) {
-            const subCategories = getSubcategories(category);
-            if (subCategories && subCategories.length > 0) {
-                whereConditions.push({
-                    category: { in: [category, ...subCategories.map(c => c.value)] }
-                });
-            } else {
-                whereConditions.push({ category });
-            }
+            whereConditions.push({ category });
         }
 
         const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
