@@ -11,6 +11,11 @@ export const km = {
     'header.user': 'អ្នកប្រើប្រាស់',
     'header.admin': 'អ្នកគ្រប់គ្រង',
 
+    // Categories
+    'category.shirts': 'អាវ',
+    'category.pants': 'ខោ',
+    'category.accessories': 'គ្រឿងតុបតែង',
+
     // Catalog
     'catalog.title': 'ការប្រមូលផ្តុំរបស់យើង',
     'catalog.subtitle': 'រកមើលផលិតផលលំដាប់ខ្ពស់របស់យើងដែលត្រូវបានរចនាឡើងសម្រាប់គុណភាពនិងប្រសិទ្ធភាព។',
@@ -29,13 +34,30 @@ export const km = {
     'filter.price.over500': 'លើសពី $500',
     'filter.clear': 'សម្អាតតម្រងទាំងអស់',
     'filter.filters': 'តម្រង',
+    'filter.all_products': 'ផលិតផលទាំងអស់',
+    'filter.active': 'តម្រងកំពុងប្រើ',
 
     // Product
+    'product.add_to_cart': 'បញ្ចូលទៅកន្ត្រក',
     'product.sold_out': 'អស់ពីស្តុក',
+    'product.left': 'នៅសល់',
     'product.like': 'ចូលចិត្ត',
     'product.liked': 'បានចូលចិត្ត',
     'product.select_color': 'សូមជ្រើសរើសពណ៌ជាមុនសិន។',
     'product.added': 'បានបន្ថែមទៅក្នុងរទេះ!',
+
+    // Cart
+    'cart.title': 'កន្ត្រករបស់អ្នក',
+    'cart.empty': 'កន្ត្រករបស់អ្នកទទេ',
+    'cart.continue': 'បន្តការទិញទំនិញ',
+    'cart.subtotal': 'សរុបរង',
+    'cart.shipping': 'ដឹកជញ្ជូន',
+    'cart.total': 'សរុប',
+    'cart.checkout': 'បង់ប្រាក់តាម Telegram',
+    'cart.size': 'ទំហំ',
+    'cart.color': 'ពណ៌',
+    'cart.item': 'មុខ',
+    'cart.items': 'មុខ',
 
     // Chat
     'chat.send': 'ផ្ញើទៅកាន់ការជជែក',

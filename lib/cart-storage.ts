@@ -1,7 +1,7 @@
 'use client';
 
 import { CartItem } from '@/types';
-import { TELEGRAM_SUPPORT_URL, SHIPPING_PRICE, FREE_SHIPPING_MIN_PRICE, TAX_RATE } from '@/lib/constants/index';
+import { TELEGRAM_SUPPORT_URL } from '@/lib/constants/index';
 
 
 const GUEST_CART_KEY = 'prostore_guest_cart';
@@ -35,8 +35,14 @@ function calcGuestCartPrices(items: CartItem[]) {
     const itemsPrice = round2(
         items.reduce((acc, item) => acc + Number(item.price) * item.qty, 0)
     );
-    const shippingPrice = itemsPrice > FREE_SHIPPING_MIN_PRICE ? 0 : SHIPPING_PRICE;
-    const taxPrice = round2(itemsPrice * TAX_RATE);
+
+    // Calculate total quantity for shipping rule
+    const totalQty = items.reduce((acc, item) => acc + item.qty, 0);
+    // Shipping is $2, free if items >= 2
+    const shippingPrice = totalQty >= 2 ? 0 : 2;
+    // Tax is removed (0)
+    const taxPrice = 0;
+
     const totalPrice = round2(itemsPrice + shippingPrice + taxPrice);
 
     return {
@@ -264,7 +270,7 @@ ${itemsList}
 💰 Order Summary:
 Subtotal: $${cart.itemsPrice}
 Shipping: $${cart.shippingPrice}
-Tax: $${cart.taxPrice}
+
 ━━━━━━━━━━━━━━
 Total: $${cart.totalPrice}
 

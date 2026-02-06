@@ -67,3 +67,18 @@ export const insertCartSchema = z.object({
   sessionCartId: z.string().min(1, 'Session cart id is required'),
   userId: z.string().optional().nullable(),
 });
+
+// Schema for updating a user
+export const updateUserSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters').optional(),
+  email: z.string().email('Invalid email address').optional(),
+  role: z.string().optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional().or(z.literal('')),
+});
+
+export const insertUserSchema = z.object({
+  name: z.string().min(3, 'Name must be at least 3 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  role: z.string().default('user'),
+});

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { APP_NAME } from '@/lib/constants';
 import Menu from './menu';
 import CategoryNav from './category-nav';
+import UserButton from './user-button';
 
 const Header = () => {
   return (
@@ -28,8 +29,8 @@ const Header = () => {
           <CategoryNav />
         </div>
 
-        {/* Menu - Cart only */}
-        <Menu />
+        {/* Menu - Cart and User */}
+        <Menu userButton={<UserButton />} />
       </div>
     </header>
   );
