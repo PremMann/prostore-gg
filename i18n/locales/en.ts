@@ -11,6 +11,11 @@ export const en = {
     'header.user': 'User',
     'header.admin': 'Admin',
 
+    // Categories
+    'category.shirts': 'Shirts',
+    'category.pants': 'Pants',
+    'category.accessories': 'Accessories',
+
     // Catalog
     'catalog.title': 'Our Collection',
     'catalog.subtitle': 'Browse our premium selection of products designed for quality and performance.',
@@ -29,13 +34,30 @@ export const en = {
     'filter.price.over500': 'Over $500',
     'filter.clear': 'Clear All Filters',
     'filter.filters': 'Filters',
+    'filter.all_products': 'All Products',
+    'filter.active': 'Active Filters',
 
     // Product
+    'product.add_to_cart': 'Add to Cart',
     'product.sold_out': 'Sold Out',
+    'product.left': 'LEFT',
     'product.like': 'Like',
     'product.liked': 'Liked',
     'product.select_color': 'Please select a color first.',
     'product.added': 'added to cart!',
+
+    // Cart
+    'cart.title': 'Your Cart',
+    'cart.empty': 'Your cart is empty',
+    'cart.continue': 'Continue Shopping',
+    'cart.subtotal': 'Subtotal',
+    'cart.shipping': 'Shipping',
+    'cart.total': 'Total',
+    'cart.checkout': 'Checkout via Telegram',
+    'cart.size': 'Size',
+    'cart.color': 'Color',
+    'cart.item': 'item',
+    'cart.items': 'items',
 
     // Chat
     'chat.send': 'Send to Chat',

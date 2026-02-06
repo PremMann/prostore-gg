@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
     LayoutDashboard,
@@ -14,7 +14,6 @@ import {
     MoreVertical,
     Trash2,
     Edit,
-    Ban,
     AlertTriangle,
     TrendingUp,
     ArrowUp,
@@ -48,8 +47,9 @@ import {
 } from "@/components/ui/dialog";
 import ProductForm from "./product-form";
 import { deleteProduct, getAllProducts, getAllCategories } from "@/lib/actions/product.actions";
-import { getAllUsers } from "@/lib/actions/user.actions";
+import { getAllUsers, deleteUser, signOutUser } from "@/lib/actions/user.actions";
 import { Product, User } from "@/types";
+import UserForm from "./user-form";
 
 // --- Mock Data ---
 
@@ -128,41 +128,53 @@ export default function AdminDashboard() {
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
+    // User State
+    const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [isUserDeleteDialogOpen, setIsUserDeleteDialogOpen] = useState(false);
+    const [userToDelete, setUserToDelete] = useState<string | null>(null);
+
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
     };
 
+    // Fetch Users Function
+    const fetchUsers = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const result = await getAllUsers({
+                page,
+                limit,
+                search: searchQuery,
+                role: roleFilter || undefined,
+                sortBy,
+                sortOrder,
+            });
+            if (result.success && result.data) {
+                setUsers(result.data.users);
+                setTotalPages(result.data.pagination.totalPages);
+                setTotalUsers(result.data.pagination.total);
+            } else {
+                toast.error(result.message || "Failed to fetch users");
+            }
+        } catch {
+            toast.error("Failed to fetch users");
+        } finally {
+            setIsLoading(false);
+        }
+    }, [page, limit, searchQuery, roleFilter, sortBy, sortOrder]);
+
     // Fetch users when users tab is active or when filters/pagination change
     useEffect(() => {
-        const fetchUsers = async () => {
-            if (activeTab === "users") {
-                setIsLoading(true);
-                try {
-                    const result = await getAllUsers({
-                        page,
-                        limit,
-                        search: searchQuery,
-                        role: roleFilter || undefined,
-                        sortBy,
-                        sortOrder,
-                    });
-                    if (result.success && result.data) {
-                        setUsers(result.data.users);
-                        setTotalPages(result.data.pagination.totalPages);
-                        setTotalUsers(result.data.pagination.total);
-                    } else {
-                        toast.error(result.message || "Failed to fetch users");
-                    }
-                } catch {
-                    toast.error("Failed to fetch users");
-                } finally {
-                    setIsLoading(false);
-                }
-            }
-        };
+        if (activeTab === "users") {
+            fetchUsers();
+        }
+    }, [activeTab, fetchUsers]);
+
+    const refreshUsers = () => {
         fetchUsers();
-    }, [activeTab, page, limit, searchQuery, roleFilter, sortBy, sortOrder]);
+    };
 
     // Fetch products
     useEffect(() => {
@@ -214,9 +226,31 @@ export default function AdminDashboard() {
     }, [isDarkMode]);
 
     // Filter Users
-    const handleDeleteUser = (id: string) => {
-        setUsers(users.filter((u) => u.id !== id));
-        toast.success("User deleted successfully");
+    // User Management Handlers
+    const confirmDeleteUser = (id: string) => {
+        setUserToDelete(id);
+        setIsUserDeleteDialogOpen(true);
+    };
+
+    const handleDeleteUser = async () => {
+        if (!userToDelete) return;
+
+        setIsLoading(true);
+        try {
+            const result = await deleteUser(userToDelete);
+            if (result.success) {
+                toast.success(result.message);
+                setIsUserDeleteDialogOpen(false);
+                setUserToDelete(null);
+                refreshUsers();
+            } else {
+                toast.error(result.message);
+            }
+        } catch {
+            toast.error("An error occurred while deleting the user");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleDeleteProduct = async () => {
@@ -308,7 +342,7 @@ export default function AdminDashboard() {
                     </Button>
                 </nav>
             </div>
-            <div className="mt-auto border-t p-4">
+            {/* <div className="mt-auto border-t p-4">
                 <Card>
                     <CardHeader className="p-4">
                         <CardTitle className="text-sm">Pro Plan</CardTitle>
@@ -322,7 +356,7 @@ export default function AdminDashboard() {
                         </Button>
                     </CardContent>
                 </Card>
-            </div>
+            </div> */}
         </div>
     );
 
@@ -382,10 +416,10 @@ export default function AdminDashboard() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>Settings</DropdownMenuItem>
-                                <DropdownMenuItem>Support</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>Logout</DropdownMenuItem>
+                                <DropdownMenuItem className="cursor-pointer" onClick={async () => {
+                                    await signOutUser();
+                                    window.location.href = '/';
+                                }}>Logout</DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </div>
@@ -467,6 +501,57 @@ export default function AdminDashboard() {
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <CardTitle>Users Management</CardTitle>
+                                <Dialog open={isUserModalOpen} onOpenChange={(open) => {
+                                    setIsUserModalOpen(open);
+                                    if (!open) setEditingUser(null);
+                                }}>
+                                    <DialogTrigger asChild>
+                                        <Button onClick={() => setEditingUser(null)}>
+                                            <Users className="mr-2 h-4 w-4" />
+                                            Add User
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
+                                            <DialogDescription>
+                                                {editingUser ? "Update user details below." : "Fill in the details below to create a new user."}
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <UserForm setOpen={setIsUserModalOpen} onSuccess={() => {
+                                            // Trigger re-fetch
+                                            setPage(1); // Reset to page 1 or keep current? kept simple
+                                            // We need to trigger the useEffect, toggling a refresh trigger or just relying on state updates if we extracted fetch logic
+                                            // For now, we can force a refresh by toggling activeTab or better, extract fetchUsers to a function we can call
+                                            // Ideally we should extract fetchUsers. I'll hack it for now by updating a timestamp or similar, or just defining fetchUsers outside useEffect.
+                                            // Actually, I can just call a refresh function.
+                                            refreshUsers();
+                                        }} user={editingUser} />
+                                    </DialogContent>
+                                </Dialog>
+
+                                {/* Delete User Confirmation Dialog */}
+                                <Dialog open={isUserDeleteDialogOpen} onOpenChange={setIsUserDeleteDialogOpen}>
+                                    <DialogContent className="sm:max-w-[425px]">
+                                        <DialogHeader>
+                                            <DialogTitle className="flex items-center gap-2 text-red-600">
+                                                <AlertTriangle className="h-5 w-5" />
+                                                Confirm Deletion
+                                            </DialogTitle>
+                                            <DialogDescription>
+                                                Are you sure you want to delete this user? This action cannot be undone.
+                                            </DialogDescription>
+                                        </DialogHeader>
+                                        <DialogFooter className="gap-2 sm:gap-0">
+                                            <Button variant="outline" onClick={() => setIsUserDeleteDialogOpen(false)}>
+                                                Cancel
+                                            </Button>
+                                            <Button variant="destructive" onClick={handleDeleteUser} disabled={isLoading}>
+                                                {isLoading ? "Deleting..." : "Delete User"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </DialogContent>
+                                </Dialog>
                             </CardHeader>
                             <CardContent>
                                 {/* Filter Controls */}
@@ -492,7 +577,7 @@ export default function AdminDashboard() {
                                             setRoleFilter(e.target.value);
                                             setPage(1);
                                         }}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
                                         <option value="">All Roles</option>
                                         <option value="admin">Admin</option>
@@ -503,7 +588,7 @@ export default function AdminDashboard() {
                                     <select
                                         value={sortBy}
                                         onChange={(e) => setSortBy(e.target.value as 'name' | 'email' | 'createdAt' | 'role')}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
                                         <option value="createdAt">Sort by: Created Date</option>
                                         <option value="name">Sort by: Name</option>
@@ -575,14 +660,14 @@ export default function AdminDashboard() {
                                                                     </DropdownMenuTrigger>
                                                                     <DropdownMenuContent align="end">
                                                                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                        <DropdownMenuItem>
+                                                                        <DropdownMenuItem onClick={() => {
+                                                                            setEditingUser(user);
+                                                                            setIsUserModalOpen(true);
+                                                                        }}>
                                                                             <Edit className="mr-2 h-4 w-4" /> Edit
                                                                         </DropdownMenuItem>
-                                                                        <DropdownMenuItem>
-                                                                            <Ban className="mr-2 h-4 w-4" /> Suspend
-                                                                        </DropdownMenuItem>
                                                                         <DropdownMenuSeparator />
-                                                                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteUser(user.id)}>
+                                                                        <DropdownMenuItem className="text-red-600" onClick={() => confirmDeleteUser(user.id)}>
                                                                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                                         </DropdownMenuItem>
                                                                     </DropdownMenuContent>
@@ -701,7 +786,7 @@ export default function AdminDashboard() {
                                             setCategoryFilter(e.target.value);
                                             setProductPage(1);
                                         }}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
                                         <option value="">All Categories</option>
                                         {categories.map((category) => (
@@ -715,7 +800,7 @@ export default function AdminDashboard() {
                                     <select
                                         value={productSortBy}
                                         onChange={(e) => setProductSortBy(e.target.value as 'name' | 'price' | 'rating' | 'createdAt')}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
                                         <option value="createdAt">Sort by: Created Date</option>
                                         <option value="name">Sort by: Name</option>

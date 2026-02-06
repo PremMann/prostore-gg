@@ -2,7 +2,7 @@
 
 import { useCart } from '@/components/cart/cart-context';
 import { checkoutViaTelegram } from '@/lib/cart-storage';
-import { Minus, Plus, ShoppingBag, Trash, MessageCircle, LogIn } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, Trash, MessageCircle } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export default function CartItems() {
         );
     }
 
-    const { items, itemsPrice, shippingPrice, taxPrice, totalPrice } = cart;
+    const { items, itemsPrice, shippingPrice, totalPrice } = cart;
 
     const handleUpdateQuantity = (productId: string, newQty: number, size?: string, color?: string) => {
         const result = updateItem(productId, newQty, size, color);
@@ -70,7 +70,7 @@ export default function CartItems() {
             </div>
 
             {/* Guest Cart Notice */}
-            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+            {/* <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
                 <div className="flex items-center gap-3">
                     <ShoppingBag className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                     <div>
@@ -78,7 +78,7 @@ export default function CartItems() {
                         <p className="text-xs text-amber-600 dark:text-amber-400">Your cart is saved locally. Sign in to save it permanently.</p>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             <div className="grid md:grid-cols-12 gap-8">
                 {/* Cart Items List */}
@@ -108,7 +108,7 @@ export default function CartItems() {
                                             {item.color && <span>Color: {item.color}</span>}
                                         </div>
                                         <div className="font-bold sm:hidden">
-                                            ${Number(item.price).toFixed(2)}
+                                            ${(Number(item.price) * item.qty).toFixed(2)}
                                         </div>
                                     </div>
 
@@ -134,7 +134,7 @@ export default function CartItems() {
                                     </div>
 
                                     <div className="w-20 text-right hidden sm:block font-bold">
-                                        ${Number(item.price).toFixed(2)}
+                                        ${(Number(item.price) * item.qty).toFixed(2)}
                                     </div>
 
                                     <Button
@@ -166,10 +166,7 @@ export default function CartItems() {
                                     <span className="text-muted-foreground">Shipping</span>
                                     <span>${shippingPrice}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Tax</span>
-                                    <span>${taxPrice}</span>
-                                </div>
+
 
                                 <div className="h-px bg-border my-4" />
 
@@ -181,7 +178,7 @@ export default function CartItems() {
 
                             {/* Primary CTA: Telegram Checkout */}
                             <Button
-                                className="w-full h-12 text-lg bg-[#229ED9] hover:bg-[#1E8BBF]"
+                                className="w-full h-12 text-lg bg-[#229ED9] hover:bg-[#1E8BBF] cursor-pointer"
                                 size="lg"
                                 onClick={handleTelegramCheckout}
                             >
@@ -190,12 +187,12 @@ export default function CartItems() {
                             </Button>
 
                             {/* Secondary CTA: Sign In */}
-                            <Link href="/sign-in?callbackUrl=/cart" className="w-full inline-block">
+                            {/* <Link href="/sign-in?callbackUrl=/cart" className="w-full inline-block">
                                 <Button className="w-full" size="lg" variant="outline">
                                     <LogIn className="w-4 h-4 mr-2" />
                                     Sign In to Save Cart
                                 </Button>
-                            </Link>
+                            </Link> */}
 
                             <p className="text-xs text-muted-foreground text-center">
                                 Your order will be confirmed via Telegram chat

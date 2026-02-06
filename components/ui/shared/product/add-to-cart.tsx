@@ -96,7 +96,7 @@ export default function AddToCart({ product }: { product: Product }) {
 
             <div className="product-add-action">
                 <Button
-                    className="w-full h-12 text-lg"
+                    className="w-full h-12 text-lg cursor-pointer"
                     onClick={handleAddToCart}
                     disabled={isLoading || product.stock < 1}
                 >

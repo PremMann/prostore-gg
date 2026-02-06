@@ -8,16 +8,18 @@ import { Product } from '@/types';
 import { ShoppingCart, Plus } from 'lucide-react';
 import { useCart } from '@/components/cart/cart-context';
 import { toast } from 'sonner';
+import { useLanguage } from '@/components/catalog/language-context';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
+  const { t } = useLanguage();
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
     if (product.stock <= 0) {
-      toast.error('Product is out of stock');
+      toast.error(t('product.sold_out'));
       return;
     }
 
@@ -34,7 +36,7 @@ const ProductCard = ({ product }: { product: Product }) => {
     };
 
     addItem(cartItem);
-    toast.success(`${product.name} added to cart`);
+    toast.success(`${product.name} ${t('product.added')}`);
   };
 
   return (
@@ -56,12 +58,12 @@ const ProductCard = ({ product }: { product: Product }) => {
         {product.stock > 0 ? (
           product.stock < 10 && (
             <div className="absolute top-3 right-3 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium tracking-wider uppercase">
-              {product.stock} left
+              {product.stock} {t('product.left')}
             </div>
           )
         ) : (
           <div className="absolute top-3 right-3 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium tracking-wider uppercase">
-            Sold out
+            {t('product.sold_out')}
           </div>
         )}
 
@@ -92,7 +94,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             "
           >
             <ShoppingCart className="w-4 h-4" />
-            <span>Add to Cart</span>
+            <span>{t('product.add_to_cart')}</span>
             <Plus className="w-3 h-3" />
           </button>
         )}
@@ -117,7 +119,7 @@ const ProductCard = ({ product }: { product: Product }) => {
           {product.stock > 0 ? (
             <ProductPrice value={Number(product.price)} className="text-base font-light text-black dark:text-white" />
           ) : (
-            <p className="text-zinc-400 dark:text-zinc-600 text-sm font-light">Out of Stock</p>
+            <p className="text-zinc-400 dark:text-zinc-600 text-sm font-light">{t('product.sold_out')}</p>
           )}
         </div>
       </CardContent>

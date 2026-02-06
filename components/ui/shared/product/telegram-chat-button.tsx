@@ -24,7 +24,7 @@ export default function TelegramChatButton({ product }: TelegramChatButtonProps)
     return (
         <Button
             variant="outline"
-            className="w-full h-12 text-lg"
+            className="w-full h-12 text-lg cursor-pointer"
             onClick={handleChatClick}
         >
             <MessageCircle className="w-5 h-5 mr-2" />

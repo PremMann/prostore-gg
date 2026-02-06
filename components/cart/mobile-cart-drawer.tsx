@@ -7,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
 import { checkoutViaTelegram } from '@/lib/cart-storage';
+import { useLanguage } from '@/components/catalog/language-context';
 
 export default function MobileCartDrawer() {
     const { cart, itemCount, updateItem, removeItem, isLoading } = useCart();
+    const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
@@ -53,7 +55,7 @@ export default function MobileCartDrawer() {
         "
             >
                 <ShoppingCart className="w-5 h-5" />
-                <span className="font-medium text-sm">Cart</span>
+                <span className="font-medium text-sm">{t('header.cart')}</span>
                 {itemCount > 0 && (
                     <span className="
             flex items-center justify-center
@@ -98,10 +100,10 @@ export default function MobileCartDrawer() {
                         <div className="flex items-center gap-3">
                             <ShoppingCart className="w-5 h-5 text-zinc-600 dark:text-zinc-400" />
                             <h2 className="text-lg font-semibold text-black dark:text-white">
-                                Your Cart
+                                {t('cart.title')}
                                 {itemCount > 0 && (
                                     <span className="ml-2 text-sm font-normal text-zinc-500">
-                                        ({itemCount} {itemCount === 1 ? 'item' : 'items'})
+                                        ({itemCount} {itemCount === 1 ? t('cart.item') : t('cart.items')})
                                     </span>
                                 )}
                             </h2>
@@ -122,9 +124,9 @@ export default function MobileCartDrawer() {
                             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
                                 <ShoppingCart className="w-8 h-8 text-zinc-400" />
                             </div>
-                            <p className="text-zinc-600 dark:text-zinc-400 mb-4">Your cart is empty</p>
+                            <p className="text-zinc-600 dark:text-zinc-400 mb-4">{t('cart.empty')}</p>
                             <Button variant="outline" onClick={() => setIsOpen(false)} asChild>
-                                <Link href="/">Continue Shopping</Link>
+                                <Link href="/">{t('cart.continue')}</Link>
                             </Button>
                         </div>
                     ) : (
@@ -150,8 +152,8 @@ export default function MobileCartDrawer() {
                                             {item.name}
                                         </h3>
                                         <div className="flex gap-2 mt-1 text-xs text-zinc-500">
-                                            {item.size && <span>Size: {item.size}</span>}
-                                            {item.color && <span>Color: {item.color}</span>}
+                                            {item.size && <span>{t('cart.size')}: {item.size}</span>}
+                                            {item.color && <span>{t('cart.color')}: {item.color}</span>}
                                         </div>
                                         <p className="font-semibold text-sm text-black dark:text-white mt-1">
                                             ${(Number(item.price) * item.qty).toFixed(2)}
@@ -196,15 +198,15 @@ export default function MobileCartDrawer() {
                         {/* Order Summary */}
                         <div className="space-y-2 mb-4">
                             <div className="flex justify-between text-sm">
-                                <span className="text-zinc-500">Subtotal</span>
+                                <span className="text-zinc-500">{t('cart.subtotal')}</span>
                                 <span className="font-medium text-black dark:text-white">${cart.itemsPrice}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-zinc-500">Shipping</span>
+                                <span className="text-zinc-500">{t('cart.shipping')}</span>
                                 <span className="font-medium text-black dark:text-white">${cart.shippingPrice}</span>
                             </div>
                             <div className="flex justify-between text-base font-semibold pt-2 border-t border-zinc-100 dark:border-zinc-800">
-                                <span className="text-black dark:text-white">Total</span>
+                                <span className="text-black dark:text-white">{t('cart.total')}</span>
                                 <span className="text-black dark:text-white">${cart.totalPrice}</span>
                             </div>
                         </div>
@@ -215,7 +217,7 @@ export default function MobileCartDrawer() {
                             className="w-full py-6 text-base font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
                         >
                             <MessageCircle className="w-5 h-5 mr-2" />
-                            Checkout via Telegram
+                            {t('cart.checkout')}
                         </Button>
                     </div>
                 )}
