@@ -19,7 +19,7 @@ const ProductList = ({ data, title, limit, viewAllLink, viewAllText = "View All"
         {title && (
           <div className="flex items-end justify-between mb-8 md:mb-12">
             <div>
-              <h2 className='text-xl md:text-2xl font-bold tracking-widest uppercase text-black'>
+              <h2 className='text-sm md:text-base font-bold tracking-widest uppercase text-black'>
                 {title}
               </h2>
             </div>
@@ -37,7 +37,7 @@ const ProductList = ({ data, title, limit, viewAllLink, viewAllText = "View All"
 
         {data.length > 0 ? (
           <>
-            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-1 md:gap-2'>
               {limitedData.map((product: Product) => (
                 <ProductCard key={product.slug} product={product} />
               ))}

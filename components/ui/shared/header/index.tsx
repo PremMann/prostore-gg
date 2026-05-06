@@ -10,9 +10,9 @@ const Header = () => {
     <header className='w-full bg-white text-black sticky top-0 z-50 uppercase font-bold text-sm'>
       {/* Announcement Bar */}
       <div className='w-full bg-black text-white text-[10px] tracking-widest text-center py-2'>
-        FREE Worldwide Shipping on Orders Over $90 — U.S. Duties & Taxes Included
+        ដឹកអត់គិតលុយទេបងប្អូន ទិញចាប់ពី 30$ ឡើងទៅ
       </div>
-      
+
       {/* Main Nav */}
       <div className='w-full px-4 lg:px-8 flex items-center justify-between h-14'>
         {/* Left Nav */}
