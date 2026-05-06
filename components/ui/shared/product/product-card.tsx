@@ -85,13 +85,13 @@ const ProductCard = ({ product }: { product: Product }) => {
       )}
 
       {/* Product Info */}
-      <div className="flex flex-col gap-0.5">
+      <div className="flex flex-col gap-0.5 mt-1">
         <Link href={`/product/${product.slug}`}>
-          <h3 className="text-[13px] md:text-[15px] font-bold text-black uppercase tracking-widest leading-tight group-hover:opacity-70 transition-opacity">
+          <h3 className="text-[9px] md:text-[10px] font-bold text-black uppercase tracking-widest leading-tight group-hover:opacity-70 transition-opacity">
             {product.name}
           </h3>
         </Link>
-        <p className="text-xs md:text-sm font-normal text-black">
+        <p className="text-[9px] md:text-[10px] font-normal text-black">
           ${Number(product.price).toFixed(2)}
         </p>
       </div>
