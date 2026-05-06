@@ -17,11 +17,9 @@ const UserButton = async () => {
 
   if (!session) {
     return (
-      <Button asChild>
-        <Link href='/sign-in'>
-          <UserIcon /> Sign In
+        <Link href='/sign-in' className='text-sm tracking-widest font-bold hover:opacity-70 transition-opacity'>
+          LOGIN
         </Link>
-      </Button>
     );
   }
 
@@ -31,16 +29,11 @@ const UserButton = async () => {
     <div className='flex gap-2 items-center'>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <div className='flex items-center cursor-pointer'>
-            <Button
-              variant='ghost'
-              className='relativee w-8 h-8 rounded-full ml-2 flex items-center justify-center bg-gray-200 cursor-pointer'
-            >
-              {firstInitial}
-            </Button>
+          <div className='flex items-center cursor-pointer text-sm tracking-widest font-bold hover:opacity-70 transition-opacity'>
+            ACCOUNT
           </div>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className='w-56' align='end' forceMount>
+        <DropdownMenuContent className='w-56 rounded-none border-black border-2' align='end' forceMount>
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col space-y-1 cursor-pointer'>
               <div className='text-sm font-medium leading-none cursor-pointer'>

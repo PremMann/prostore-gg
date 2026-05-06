@@ -2,28 +2,19 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
-import ProductPrice from './product-price';
 import { Product } from '@/types';
-import { ShoppingCart, Plus } from 'lucide-react';
 import { useCart } from '@/components/cart/cart-context';
 import { toast } from 'sonner';
-import { useLanguage } from '@/components/catalog/language-context';
 
 const ProductCard = ({ product }: { product: Product }) => {
   const { addItem } = useCart();
-  const { t } = useLanguage();
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddSize = (e: React.MouseEvent, size: string) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (product.stock <= 0) {
-      toast.error(t('product.sold_out'));
-      return;
-    }
+    if (product.stock <= 0) return;
 
-    // Add with default size and color if available
     const cartItem = {
       productId: product.id,
       name: product.name,
@@ -31,99 +22,80 @@ const ProductCard = ({ product }: { product: Product }) => {
       image: product.images[0],
       price: product.price.toString(),
       qty: 1,
-      size: product.sizes?.[0] || undefined,
+      size: size,
       color: product.colors?.[0] || undefined,
     };
 
     addItem(cartItem);
-    toast.success(`${product.name} ${t('product.added')}`);
+    toast.success('Item added to bag');
   };
 
+  const hasSecondImage = product.images.length > 1;
+
   return (
-    <Card className="group w-full h-full flex flex-col overflow-hidden border-0 bg-transparent shadow-none">
-      {/* Image Container - Sharp, Minimal */}
-      <Link href={`/product/${product.slug}`} className="relative w-full aspect-[3/4] overflow-hidden bg-zinc-100 dark:bg-zinc-900 mb-4">
+    <div className="group w-full flex flex-col bg-white">
+      <Link href={`/product/${product.slug}`} className="relative w-full aspect-square overflow-hidden mb-2 bg-gray-100 block">
         <Image
           src={product.images[0]}
           alt={product.name}
           fill
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+          className={`object-cover transition-opacity duration-500 ease-in-out ${hasSecondImage ? 'group-hover:opacity-0' : ''}`}
+          sizes="(max-width: 768px) 50vw, 25vw"
         />
-
-        {/* Subtle overlay on hover */}
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-all duration-500" />
-
-        {/* Stock badge - Minimal */}
-        {product.stock > 0 ? (
-          product.stock < 10 && (
-            <div className="absolute top-3 right-3 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium tracking-wider uppercase">
-              {product.stock} {t('product.left')}
-            </div>
-          )
-        ) : (
-          <div className="absolute top-3 right-3 px-2 py-1 bg-black dark:bg-white text-white dark:text-black text-[10px] font-medium tracking-wider uppercase">
-            {t('product.sold_out')}
-          </div>
+        {hasSecondImage && (
+          <Image
+            src={product.images[1]}
+            alt={`${product.name} alternate`}
+            fill
+            className="object-cover transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 absolute inset-0"
+            sizes="(max-width: 768px) 50vw, 25vw"
+          />
         )}
 
-        {/* Add to Cart Button - Desktop: Show on hover / Mobile: Always visible */}
-        {product.stock > 0 && (
-          <button
-            onClick={handleAddToCart}
-            className="
-              absolute bottom-3 left-3 right-3
-              flex items-center justify-center gap-2
-              py-3 px-4
-              bg-black/90 dark:bg-white/90
-              text-white dark:text-black
-              text-xs font-medium tracking-wider uppercase
-              backdrop-blur-sm
-              transition-all duration-300 ease-out
-              
-              /* Mobile: Always visible */
-              opacity-100
-              
-              /* Desktop: Show on hover with slide-up animation */
-              md:opacity-0 md:translate-y-2
-              md:group-hover:opacity-100 md:group-hover:translate-y-0
-              
-              hover:bg-black dark:hover:bg-white
-              active:scale-[0.98]
-              cursor-pointer
-            "
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>{t('product.add_to_cart')}</span>
-            <Plus className="w-3 h-3" />
-          </button>
+        {product.stock <= 0 && (
+          <div className="absolute top-2 left-2 bg-black text-white text-[10px] tracking-widest px-2 py-1 uppercase font-bold z-10">
+            SOLD OUT
+          </div>
         )}
       </Link>
 
-      {/* Content - Ultra Minimal */}
-      <CardContent className="p-0 flex flex-col gap-2 flex-1">
-        {/* Brand - Uppercase, Tracked */}
-        <div className="text-[10px] font-medium text-zinc-500 dark:text-zinc-500 uppercase tracking-[0.15em]">
-          {product.brand}
+      {/* Size Pills */}
+      {product.stock > 0 && product.sizes && product.sizes.length > 0 && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          {product.sizes.map((size) => (
+            <button
+              key={size}
+              onClick={(e) => handleAddSize(e, size)}
+              className="px-2 py-1 text-[10px] font-bold border border-black hover:bg-black hover:text-white transition-colors uppercase cursor-pointer"
+            >
+              {size}
+            </button>
+          ))}
         </div>
+      )}
+      {product.stock > 0 && (!product.sizes || product.sizes.length === 0) && (
+        <div className="flex flex-wrap gap-1 mb-2">
+            <button
+              onClick={(e) => handleAddSize(e, '')}
+              className="px-2 py-1 text-[10px] font-bold border border-black hover:bg-black hover:text-white transition-colors uppercase cursor-pointer"
+            >
+              ADD
+            </button>
+        </div>
+      )}
 
-        {/* Product Name */}
+      {/* Product Info */}
+      <div className="flex flex-col gap-0.5">
         <Link href={`/product/${product.slug}`}>
-          <h3 className="text-sm font-light text-black dark:text-white line-clamp-2 group-hover:text-zinc-600 dark:group-hover:text-zinc-400 transition-colors duration-300 leading-relaxed">
+          <h3 className="text-[13px] md:text-[15px] font-bold text-black uppercase tracking-widest leading-tight group-hover:opacity-70 transition-opacity">
             {product.name}
           </h3>
         </Link>
-
-        {/* Price - Prominent but Minimal */}
-        <div className="flex items-center justify-between mt-auto pt-3">
-          {product.stock > 0 ? (
-            <ProductPrice value={Number(product.price)} className="text-base font-light text-black dark:text-white" />
-          ) : (
-            <p className="text-zinc-400 dark:text-zinc-600 text-sm font-light">{t('product.sold_out')}</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        <p className="text-xs md:text-sm font-normal text-black">
+          ${Number(product.price).toFixed(2)}
+        </p>
+      </div>
+    </div>
   );
 };
 
