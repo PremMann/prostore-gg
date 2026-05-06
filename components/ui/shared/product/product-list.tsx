@@ -17,12 +17,11 @@ const ProductList = ({ data, title, limit, viewAllLink, viewAllText = "View All"
     <section id="products" className='py-20 md:py-28 bg-white dark:bg-black'>
       <div className="max-w-[1400px] mx-auto px-8 lg:px-16">
         {title && (
-          <div className="flex items-end justify-between mb-16">
+          <div className="flex items-end justify-between mb-8 md:mb-12">
             <div>
-              <h2 className='text-2xl md:text-3xl font-light tracking-tight uppercase text-black dark:text-white'>
+              <h2 className='text-xl md:text-2xl font-bold tracking-widest uppercase text-black'>
                 {title}
               </h2>
-              <div className="h-px w-16 bg-black dark:bg-white mt-4" />
             </div>
             {viewAllLink && (
               <Link
@@ -38,7 +37,7 @@ const ProductList = ({ data, title, limit, viewAllLink, viewAllText = "View All"
 
         {data.length > 0 ? (
           <>
-            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10'>
+            <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-1 md:gap-2'>
               {limitedData.map((product: Product) => (
                 <ProductCard key={product.slug} product={product} />
               ))}

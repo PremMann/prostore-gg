@@ -9,16 +9,8 @@ export default function CartButton() {
     const { itemCount, isLoading } = useCart();
 
     return (
-        <Button asChild variant="ghost" size="icon" className="relative">
-            <Link href="/cart">
-                <ShoppingCart className="w-5 h-5" />
-                {!isLoading && itemCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
-                        {itemCount > 99 ? '99+' : itemCount}
-                    </span>
-                )}
-                <span className="sr-only">Cart</span>
-            </Link>
-        </Button>
+        <Link href="/cart" className="text-sm tracking-widest font-bold hover:opacity-70 transition-opacity">
+            BAG ({!isLoading ? itemCount : 0})
+        </Link>
     );
 }

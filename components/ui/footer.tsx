@@ -1,14 +1,21 @@
-import { APP_NAME } from '@/lib/constants';
+import Link from 'next/link';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
   return (
-    <footer className="bg-white dark:bg-black border-t border-zinc-200 dark:border-zinc-800 py-12">
-      <div className="max-w-[1400px] mx-auto px-8 lg:px-16 text-center">
-        <p className="text-[10px] tracking-wide uppercase text-zinc-500 dark:text-zinc-500">
-          © {currentYear} {APP_NAME}. All rights reserved.
-        </p>
+    <footer className="bg-white text-black py-16 border-t-2 border-black">
+      <div className="max-w-[1400px] mx-auto px-4 lg:px-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+        <div className="flex flex-col gap-2 text-sm tracking-widest font-bold">
+          <Link href="/pages/client-services" className="hover:opacity-70 transition-opacity">
+            CLIENT SERVICE
+          </Link>
+          <Link href="/pages/terms-of-service" className="hover:opacity-70 transition-opacity">
+            TERMS OF SERVICE
+          </Link>
+        </div>
+        
+        <div className="text-[10px] tracking-widest uppercase">
+          © {new Date().getFullYear()} pxxcxmxkxr (PROSTORE GG). All rights reserved.
+        </div>
       </div>
     </footer>
   );
