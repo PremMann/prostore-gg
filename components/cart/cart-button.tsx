@@ -1,9 +1,7 @@
 'use client';
 
 import { useCart } from '@/components/cart/cart-context';
-import { ShoppingCart } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function CartButton() {
     const { itemCount, isLoading } = useCart();

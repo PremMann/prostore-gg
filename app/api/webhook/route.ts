@@ -31,7 +31,17 @@ const PRODUCTS = [
 
 // ── ORDER STATE (in-memory, resets on redeploy) ───────────────
 // For production: replace with your Prisma database
-const orders: Record<string, any> = {}
+type Order = {
+  step?: 'waiting_size' | 'waiting_phone' | 'waiting_location' | 'done'
+  productTitle?: string
+  price?: string
+  size?: string
+  phone?: string
+  location?: string
+  time?: string
+}
+
+const orders: Record<string, Order> = {}
 
 // ── STEP 1: META VERIFIES YOUR WEBHOOK (GET) ─────────────────
 export async function GET(req: NextRequest) {
@@ -49,23 +59,38 @@ export async function GET(req: NextRequest) {
 
 // ── STEP 2: RECEIVE MESSAGES FROM META (POST) ────────────────
 export async function POST(req: NextRequest) {
-  const body = await req.json()
+  const body = (await req.json()) as unknown;
+
+  // Define a narrow type for the webhook payload we expect from Meta
+  type WebhookPayload = {
+    object?: string
+    entry?: Array<{
+      messaging?: Array<Record<string, unknown>>
+    }>
+  }
+
+  const payload = body as WebhookPayload;
 
   // Always return 200 immediately — Meta requires this
-  if (body.object !== 'page') {
+  if (payload.object !== 'page') {
     return new NextResponse('OK', { status: 200 })
   }
 
-  for (const entry of body.entry ?? []) {
+  for (const entry of payload.entry ?? []) {
     const event = entry.messaging?.[0]
     if (!event) continue
 
-    const senderId: string = event.sender.id
+    const sender = event.sender as { id?: string } | undefined
+    const senderId = sender?.id
+    if (!senderId) continue
 
-    if (event.message?.text) {
-      await handleText(senderId, event.message.text)
-    } else if (event.postback?.payload) {
-      await handlePostback(senderId, event.postback.payload)
+    const message = event.message as { text?: string } | undefined
+    const postback = event.postback as { payload?: string } | undefined
+
+    if (message?.text) {
+      await handleText(senderId, String(message.text))
+    } else if (postback?.payload) {
+      await handlePostback(senderId, String(postback.payload))
     }
   }
 
@@ -221,7 +246,7 @@ async function sendTyping(senderId: string) {
   await new Promise(r => setTimeout(r, 800))
 }
 
-async function sendRequest(body: object) {
+async function sendRequest(body: Record<string, unknown>) {
   const res = await fetch(`${GRAPH_URL}?access_token=${PAGE_ACCESS_TOKEN}`, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
