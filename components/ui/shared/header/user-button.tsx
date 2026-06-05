@@ -10,7 +10,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { UserIcon } from 'lucide-react';
+// User icon removed - not used in this minimal button
 
 const UserButton = async () => {
   const session = await auth();
@@ -22,8 +22,6 @@ const UserButton = async () => {
         </Link>
     );
   }
-
-  const firstInitial = session.user?.name?.charAt(0).toUpperCase() ?? 'U';
 
   return (
     <div className='flex gap-2 items-center'>

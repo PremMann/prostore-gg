@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { Menu as MenuIcon } from 'lucide-react';
 import {
   Sheet,
