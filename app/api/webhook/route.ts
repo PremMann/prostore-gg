@@ -171,11 +171,27 @@ export async function POST(req: NextRequest) {
 // ── HANDLE TEXT ───────────────────────────────────────────────
 async function handleText(psid: string, text: string) {
   const session = getSession(psid)
+  const t = text.trim()
 
-  if (session.step === 'waiting_phone')    return handlePhone(psid, text)
-  if (session.step === 'waiting_location') return handleLocation(psid, text)
+  // Mid-order flow takes priority
+  if (session.step === 'waiting_phone')    return handlePhone(psid, t)
+  if (session.step === 'waiting_location') return handleLocation(psid, t)
 
-  // Any text → show main menu
+  // Quick reply buttons send their TITLE as text — detect them here
+  if (t.includes('ខោខ្លី'))  return sendCategoryProducts(psid, 'shorts')
+  if (t.includes('ខោវែង'))  return sendCategoryProducts(psid, 'pants')
+  if (t.includes('អាវវែង')) return sendCategoryProducts(psid, 'polo')
+  if (t.includes('អាវខ្លី')) return sendCategoryProducts(psid, 'tshirt')
+  if (t.includes('បន្ថែម') || t.includes('ម៉ឺនុយ')) {
+    resetSession(psid)
+    return sendMainMenu(psid)
+  }
+  if (t.includes('បញ្ចប់') && session.cart.length > 0) {
+    session.step = 'waiting_phone'
+    return sendText(psid, `📞 សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នក:\n(ឧទាហរណ៍: 012 345 678)`)
+  }
+
+  // Default → main menu
   return sendMainMenu(psid)
 }
 
@@ -296,10 +312,10 @@ async function sendMainMenu(psid: string) {
     message: {
       text: `សូមស្វាគមន៍មក DORMAX 👋\nSimple Style For Man 🇰🇭\n\nសូមជ្រើសរើសប្រភេទផលិតផល:`,
       quick_replies: [
-        { content_type: 'text', title: '👖 ខោខ្លី', payload: 'CAT_SHORTS' },
-        { content_type: 'text', title: '👔 ខោវែង', payload: 'CAT_PANTS'  },
-        { content_type: 'text', title: '👕 អាវវែង', payload: 'CAT_POLO'  },
-        { content_type: 'text', title: '👕 អាវខ្លី', payload: 'CAT_TSHIRT'},
+        { content_type: 'text', title: '👖 ខោខ្លី',  payload: 'CAT_SHORTS'  },
+        { content_type: 'text', title: '👔 ខោវែង',  payload: 'CAT_PANTS'   },
+        { content_type: 'text', title: '👕 អាវវែង', payload: 'CAT_POLO'    },
+        { content_type: 'text', title: '👕 អាវខ្លី', payload: 'CAT_TSHIRT'  },
       ],
     },
   })
