@@ -7,12 +7,17 @@ const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID!
 const GRAPH_URL          = 'https://graph.facebook.com/v19.0/me/messages'
 
 // ── PRODUCT CATALOG ───────────────────────────────────────────
+type ColorOption = {
+  name: string
+  imageUrl: string
+}
+
 type Product = {
   id: string
   name: string
   nameKh: string
   price: number
-  colors: string[]
+  colors: ColorOption[]
   sizes: string[]
   image: string
   url: string
@@ -25,7 +30,13 @@ const PRODUCTS: Product[] = [
     name: 'DORMAX Chino Shorts',
     nameKh: 'ខោខ្លី DORMAX',
     price: 13.99,
-    colors: ['⚫ Black', '🔵 Navy', '🩶 Grey', '🟤 Khaki', '⚪ White'],
+    colors: [
+      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg' },
+      { name: '🔵 Navy', imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Chino+Shorts' },
+      { name: '🩶 Grey', imageUrl: 'https://via.placeholder.com/600x400/808080/ffffff?text=Grey+Chino+Shorts' },
+      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Chino+Shorts' },
+      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+Chino+Shorts' }
+    ],
     sizes: ['29', '30', '31', '32', '34', '35'],
     image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
     url: 'https://prostore-gg.vercel.app/product/dormax',
@@ -36,7 +47,12 @@ const PRODUCTS: Product[] = [
     name: 'Chino Joggers',
     nameKh: 'ខោ Jogger DORMAX',
     price: 14.50,
-    colors: ['⚫ Black', '🔵 Navy', '🟢 Army Green', '🟤 Khaki'],
+    colors: [
+      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1775106306643_IMAGE_2026-03-13_12%3A14%3A54-Cty6miifN0Nfcj3v3iU7NYt27aZaNf.jpg' },
+      { name: '🔵 Navy', imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Chino+Joggers' },
+      { name: '🟢 Army Green', imageUrl: 'https://via.placeholder.com/600x400/4b5320/ffffff?text=Army+Green+Joggers' },
+      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Joggers' }
+    ],
     sizes: ['29', '30', '32', '34', '36'],
     image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1775106306643_IMAGE_2026-03-13_12%3A14%3A54-Cty6miifN0Nfcj3v3iU7NYt27aZaNf.jpg',
     url: 'https://prostore-gg.vercel.app/product/ignature-chino-joggers-dormax-series',
@@ -47,7 +63,12 @@ const PRODUCTS: Product[] = [
     name: 'DORMAX Long Pants',
     nameKh: 'ខោវែង DORMAX',
     price: 15.50,
-    colors: ['⚫ Black', '🔵 Navy', '🟢 Army Green', '🟤 Khaki'],
+    colors: [
+      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg' },
+      { name: '🔵 Navy', imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Long+Pants' },
+      { name: '🟢 Army Green', imageUrl: 'https://via.placeholder.com/600x400/4b5320/ffffff?text=Army+Green+Long+Pants' },
+      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Long+Pants' }
+    ],
     sizes: ['29', '30', '32', '34', '36'],
     image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg',
     url: 'https://prostore-gg.vercel.app/product/long-pants',
@@ -58,7 +79,12 @@ const PRODUCTS: Product[] = [
     name: 'DORMAX Polo Shirt',
     nameKh: 'អាវវែង Polo DORMAX',
     price: 12.50,
-    colors: ['⚫ Black', '🟤 Brown', '🟡 Cream', '⚪ White'],
+    colors: [
+      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg' },
+      { name: '🟤 Brown', imageUrl: 'https://via.placeholder.com/600x400/5c4033/ffffff?text=Brown+Polo+Shirt' },
+      { name: '🟡 Cream', imageUrl: 'https://via.placeholder.com/600x400/fffdd0/000000?text=Cream+Polo+Shirt' },
+      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+Polo+Shirt' }
+    ],
     sizes: ['S', 'M', 'L', 'XL', '2XL'],
     image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg',
     url: 'https://prostore-gg.vercel.app/product/dormax01',
@@ -69,7 +95,11 @@ const PRODUCTS: Product[] = [
     name: 'DORMAX T-Shirt',
     nameKh: 'អាវខ្លី DORMAX',
     price: 12.00,
-    colors: ['⚫ Black', '🟤 Khaki', '⚪ White'],
+    colors: [
+      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg' },
+      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+T-Shirt' },
+      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+T-Shirt' }
+    ],
     sizes: ['M', 'L', 'XL', 'XXL'],
     image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
     url: 'https://prostore-gg.vercel.app/product/dormax',
@@ -86,10 +116,9 @@ type CartItem = {
 }
 
 type SessionState = {
-  step: 'idle' | 'selecting_color' | 'selecting_size' | 'selecting_quantity' | 'waiting_phone' | 'waiting_location' | 'selecting_shipping' | 'selecting_payment' | 'confirming'
-  currentProduct: Product | null
-  selectedColor: string
-  selectedSize: string
+  step: 'idle' | 'selecting_size' | 'waiting_phone' | 'waiting_location' | 'selecting_shipping' | 'selecting_payment' | 'confirming'
+  pendingProduct: Product | null
+  pendingColor: string
   cart: CartItem[]
   phone: string
   location: string
@@ -103,9 +132,8 @@ function getSession(psid: string): SessionState {
   if (!sessions.has(psid)) {
     sessions.set(psid, {
       step: 'idle',
-      currentProduct: null,
-      selectedColor: '',
-      selectedSize: '',
+      pendingProduct: null,
+      pendingColor: '',
       cart: [],
       phone: '',
       location: '',
@@ -118,6 +146,17 @@ function getSession(psid: string): SessionState {
 
 function resetSession(psid: string) {
   sessions.delete(psid)
+}
+
+function getMatchingProducts(category: 'shorts' | 'tops' | 'pants'): Product[] {
+  if (category === 'shorts') {
+    return PRODUCTS.filter(p => p.category === 'shorts')
+  }
+  if (category === 'pants') {
+    return PRODUCTS.filter(p => p.category === 'pants')
+  }
+  // 'tops' category maps to both 'polo' and 'tshirt' categories
+  return PRODUCTS.filter(p => p.category === 'polo' || p.category === 'tshirt')
 }
 
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
@@ -196,11 +235,10 @@ async function handleText(psid: string, text: string) {
   if (session.step === 'waiting_phone')    return handlePhone(psid, t)
   if (session.step === 'waiting_location') return handleLocation(psid, t)
 
-  // Quick reply title text detection fallback
-  if (t.includes('ខោខ្លី'))  return sendCategoryProducts(psid, 'shorts')
-  if (t.includes('ខោវែង'))  return sendCategoryProducts(psid, 'pants')
-  if (t.includes('អាវវែង')) return sendCategoryProducts(psid, 'polo')
-  if (t.includes('អាវខ្លី')) return sendCategoryProducts(psid, 'tshirt')
+  // Khmer text fallbacks for main menu categories
+  if (t.includes('ខោខ្លី'))  return showCategoryColors(psid, 'shorts')
+  if (t.includes('ខោវែង'))  return showCategoryColors(psid, 'pants')
+  if (t.includes('អាវ'))      return showCategoryColors(psid, 'tops')
   if (t.includes('បន្ថែម') || t.includes('ម៉ឺនុយ')) {
     resetSession(psid)
     return sendMainMenu(psid)
@@ -225,69 +263,56 @@ async function handlePostback(psid: string, payload: string) {
     return sendMainMenu(psid)
   }
 
-  // Category selection
+  // Category selection (Step 1)
   if (payload.startsWith('CAT_')) {
-    const cat = payload.replace('CAT_', '').toLowerCase() as Product['category']
-    return sendCategoryProducts(psid, cat)
+    const cat = payload.replace('CAT_', '').toLowerCase() as 'shorts' | 'tops' | 'pants'
+    return showCategoryColors(psid, cat)
   }
 
-  // Order a product
-  if (payload.startsWith('ORDER_')) {
-    const productId = payload.replace('ORDER_', '')
-    const product   = PRODUCTS.find(p => p.id === productId)
+  // Color selection (Step 2)
+  if (payload.startsWith('SELECT_COLOR_')) {
+    // Expected format: SELECT_COLOR_<productId>_<colorName>
+    const match = payload.match(/^SELECT_COLOR_([A-Z_]+)_(.+)$/)
+    if (!match) return
+
+    const productId = match[1]
+    const colorName = match[2].replace(/_/g, ' ')
+
+    const product = PRODUCTS.find(p => p.id === productId)
     if (!product) return
 
-    session.currentProduct = product
-    session.selectedColor = ''
-    session.selectedSize = ''
-    session.step = 'selecting_color'
-    return sendColorSelection(psid, product)
-  }
-
-  // Color selection
-  if (payload.startsWith('COLOR_')) {
-    if (session.step !== 'selecting_color' || !session.currentProduct) return
-    const color = payload.replace('COLOR_', '').replace(/_/g, ' ')
-    session.selectedColor = color
+    session.pendingProduct = product
+    session.pendingColor = colorName
     session.step = 'selecting_size'
-    return sendSizeSelection(psid, session.currentProduct)
+    return sendSizeSelection(psid)
   }
 
-  // Size selection
+  // Size selection (Step 3)
   if (payload.startsWith('SIZE_')) {
-    if (session.step !== 'selecting_size' || !session.currentProduct) return
+    if (session.step !== 'selecting_size' || !session.pendingProduct || !session.pendingColor) return
     const size = payload.replace('SIZE_', '')
-    session.selectedSize = size
-    session.step = 'selecting_quantity'
-    return sendQuantitySelection(psid)
-  }
 
-  // Quantity selection
-  if (payload.startsWith('QTY_')) {
-    if (session.step !== 'selecting_quantity' || !session.currentProduct || !session.selectedColor || !session.selectedSize) return
-    const qty = parseInt(payload.replace('QTY_', ''), 10) || 1
+    // Directly push to cart with quantity 1
     session.cart.push({
-      product: session.currentProduct,
-      color: session.selectedColor,
-      size: session.selectedSize,
-      quantity: qty,
+      product: session.pendingProduct,
+      color: session.pendingColor,
+      size,
+      quantity: 1,
     })
 
     const lastItem = session.cart[session.cart.length - 1]
-    
+
     // Reset selection states
     session.step = 'idle'
-    session.currentProduct = null
-    session.selectedColor = ''
-    session.selectedSize = ''
+    session.pendingProduct = null
+    session.pendingColor = ''
 
     await sendText(psid,
       `✅ បានបន្ថែមទៅកន្ត្រក!\n\n` +
       `🛍️ ${lastItem.product.nameKh}\n` +
       `🎨 ពណ៌: ${lastItem.color}\n` +
       `📏 ទំហំ: ${lastItem.size}\n` +
-      `🔢 ចំនួន: ${lastItem.quantity}\n` +
-      `💰 $${(lastItem.product.price * lastItem.quantity).toFixed(2)}`
+      `💰 $${lastItem.product.price.toFixed(2)}`
     )
     return sendContinueOrCheckout(psid)
   }
@@ -347,43 +372,34 @@ async function handlePostback(psid: string, payload: string) {
   }
 }
 
-// ── SEND MAIN MENU ────────────────────────────────────────────
+// ── STEP 1: SEND MAIN MENU ────────────────────────────────────
 async function sendMainMenu(psid: string) {
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: `សូមស្វាគមន៍មក DORMAX 👋\nSimple Style For Man 🇰🇭\n\nសូមជ្រើសរើសប្រភេទផលិតផល:`,
-      quick_replies: [
-        { content_type: 'text', title: '👖 ខោខ្លី',  payload: 'CAT_SHORTS'  },
-        { content_type: 'text', title: '👔 ខោវែង',  payload: 'CAT_PANTS'   },
-        { content_type: 'text', title: '👕 អាវវែង', payload: 'CAT_POLO'    },
-        { content_type: 'text', title: '👕 អាវខ្លី', payload: 'CAT_TSHIRT'  },
+  const elements = [
+    {
+      title: '👖 ខោខ្លី (Shorts)',
+      subtitle: 'ចាប់ពី $13.99 | ពណ៌ច្រើនជម្រើស',
+      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
+      buttons: [
+        { type: 'postback', title: 'មើលខោខ្លី និងតម្លៃ', payload: 'CAT_SHORTS' },
       ],
     },
-  })
-}
-
-// ── SEND CATEGORY PRODUCTS ────────────────────────────────────
-async function sendCategoryProducts(psid: string, category: Product['category']) {
-  const products = PRODUCTS.filter(p => p.category === category)
-  if (products.length === 0) return sendMainMenu(psid)
-
-  await sendTyping(psid)
-
-  const elements = products.map(p => ({
-    title:     `${p.nameKh} — $${p.price.toFixed(2)}`,
-    subtitle:  `📏 ${p.sizes.join(' ')} | 🎨 ${p.colors.length} ពណ៌`,
-    image_url: p.image,
-    default_action: {
-      type: 'web_url',
-      url:  p.url,
-      webview_height_ratio: 'tall',
+    {
+      title: '👕 អាវបុរស (Tops)',
+      subtitle: 'ចាប់ពី $12.00 | ប៉ូឡូ និងអាវយឺត',
+      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg',
+      buttons: [
+        { type: 'postback', title: 'មើលអាវ និងតម្លៃ', payload: 'CAT_TOPS' },
+      ],
     },
-    buttons: [
-      { type: 'web_url',  url: p.url,              title: '👁️ មើលលម្អិត' },
-      { type: 'postback', payload: `ORDER_${p.id}`, title: '🛍️ បញ្ជាទិញ'  },
-    ],
-  }))
+    {
+      title: '👖 ខោវែង (Pants)',
+      subtitle: 'ចាប់ពី $14.50 | ខោវែង DORMAX',
+      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg',
+      buttons: [
+        { type: 'postback', title: 'មើលខោវែង និងតម្លៃ', payload: 'CAT_PANTS' },
+      ],
+    },
+  ]
 
   await sendRequest({
     recipient: { id: psid },
@@ -391,6 +407,51 @@ async function sendCategoryProducts(psid: string, category: Product['category'])
       attachment: {
         type: 'template',
         payload: { template_type: 'generic', elements },
+      },
+    },
+  })
+}
+
+// ── STEP 2: SHOW CATEGORY COLORS ──────────────────────────────
+async function showCategoryColors(psid: string, category: 'shorts' | 'tops' | 'pants') {
+  const products = getMatchingProducts(category)
+  if (products.length === 0) return sendMainMenu(psid)
+
+  await sendTyping(psid)
+
+  const elements: Array<{
+    title: string
+    subtitle: string
+    image_url: string
+    buttons: Array<{ type: string; title: string; payload: string }>
+  }> = []
+
+  for (const p of products) {
+    for (const color of p.colors) {
+      elements.push({
+        title: `${p.nameKh} — ${color.name}`,
+        subtitle: `💰 $${p.price.toFixed(2)} | 📏 ទំហំ: ${p.sizes.join(' ')}`,
+        image_url: color.imageUrl,
+        buttons: [
+          {
+            type: 'postback',
+            title: '🛍️ ជ្រើសរើស',
+            payload: `SELECT_COLOR_${p.id}_${color.name.replace(/\s+/g, '_')}`,
+          },
+        ],
+      })
+    }
+  }
+
+  // Cap elements to a maximum of 10 to respect Messenger template limit
+  const finalElements = elements.slice(0, 10)
+
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      attachment: {
+        type: 'template',
+        payload: { template_type: 'generic', elements: finalElements },
       },
     },
   })
@@ -407,42 +468,18 @@ async function sendCategoryProducts(psid: string, category: Product['category'])
   })
 }
 
-// ── SEND COLOR SELECTION ──────────────────────────────────────
-async function sendColorSelection(psid: string, product: Product) {
-  await sendText(psid,
-    `🛍️ ${product.nameKh}\n` +
-    `💰 $${product.price.toFixed(2)}\n` +
-    `📏 ទំហំដែលមាន: ${product.sizes.join(', ')}\n\n` +
-    `🎨 សូមជ្រើសរើសពណ៌:`
-  )
-  return sendColorButtons(psid, product.colors)
-}
-
-async function sendColorButtons(psid: string, colors: string[]) {
-  const colorReplies = colors.map(c => ({
-    content_type: 'text',
-    title: c.length > 13 ? c.slice(0, 13) : c,
-    payload: `COLOR_${c.replace(/\s+/g, '_')}`,
-  }))
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'ពណ៌ដែលមាន:',
-      quick_replies: colorReplies,
-    },
-  })
-}
-
-// ── SEND SIZE SELECTION ───────────────────────────────────────
-async function sendSizeSelection(psid: string, product: Product) {
+// ── STEP 3: SEND SIZE SELECTION ────────────────────────────────
+async function sendSizeSelection(psid: string) {
   const session = getSession(psid)
+  if (!session.pendingProduct) return
+
   await sendText(psid,
-    `🎨 ពណ៌ដែលបានជ្រើស: ${session.selectedColor}\n\n` +
-    `📏 សូមជ្រើសរើសទំហំ:`
+    `🛍️ ${session.pendingProduct.nameKh}\n` +
+    `🎨 ពណ៌ដែលបានជ្រើស: ${session.pendingColor}\n\n` +
+    `📏 សូមជ្រើសរើសទំហំ (Size):`
   )
 
-  const sizeReplies = product.sizes.map(s => ({
+  const sizeReplies = session.pendingProduct.sizes.map(s => ({
     content_type: 'text',
     title: s,
     payload: `SIZE_${s}`,
@@ -453,33 +490,6 @@ async function sendSizeSelection(psid: string, product: Product) {
     message: {
       text: 'ទំហំដែលមាន:',
       quick_replies: sizeReplies,
-    },
-  })
-}
-
-// ── SEND QUANTITY SELECTION ───────────────────────────────────
-async function sendQuantitySelection(psid: string) {
-  const session = getSession(psid)
-  if (!session.currentProduct) return
-
-  await sendText(psid,
-    `🛍️ ${session.currentProduct.nameKh}\n` +
-    `🎨 ពណ៌: ${session.selectedColor}\n` +
-    `📏 ទំហំ: ${session.selectedSize}\n\n` +
-    `🔢 សូមជ្រើសរើសចំនួន (Quantity):`
-  )
-
-  const qtyReplies = [1, 2, 3, 4, 5].map(q => ({
-    content_type: 'text',
-    title: String(q),
-    payload: `QTY_${q}`,
-  }))
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'ចំនួន:',
-      quick_replies: qtyReplies,
     },
   })
 }
