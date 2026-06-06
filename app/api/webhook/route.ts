@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
 
     const sender = event.sender as { id?: string } | undefined
     const senderId = sender?.id
+    console.log('SENDER PSID:', senderId) // add this line
     if (!senderId) continue
 
     const message = event.message as { text?: string } | undefined
