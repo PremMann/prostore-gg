@@ -80,17 +80,21 @@ const PRODUCTS: Product[] = [
 // ── SESSION STATE ─────────────────────────────────────────────
 type CartItem = {
   product: Product
-  colors: string[]
+  color: string
   size: string
+  quantity: number
 }
 
 type SessionState = {
-  step: 'idle' | 'selecting_color' | 'selecting_size' | 'waiting_phone' | 'waiting_location' | 'confirming'
+  step: 'idle' | 'selecting_color' | 'selecting_size' | 'selecting_quantity' | 'waiting_phone' | 'waiting_location' | 'selecting_shipping' | 'selecting_payment' | 'confirming'
   currentProduct: Product | null
-  selectedColors: string[]
+  selectedColor: string
+  selectedSize: string
   cart: CartItem[]
   phone: string
   location: string
+  shippingOption: 'phnom_penh' | 'province' | null
+  paymentMethod: 'cod' | 'aba' | null
 }
 
 const sessions = new Map<string, SessionState>()
@@ -100,24 +104,20 @@ function getSession(psid: string): SessionState {
     sessions.set(psid, {
       step: 'idle',
       currentProduct: null,
-      selectedColors: [],
+      selectedColor: '',
+      selectedSize: '',
       cart: [],
       phone: '',
       location: '',
+      shippingOption: null,
+      paymentMethod: null,
     })
   }
   return sessions.get(psid)!
 }
 
 function resetSession(psid: string) {
-  sessions.set(psid, {
-    step: 'idle',
-    currentProduct: null,
-    selectedColors: [],
-    cart: [],
-    phone: '',
-    location: '',
-  })
+  sessions.delete(psid)
 }
 
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
@@ -136,34 +136,53 @@ export async function GET(req: NextRequest) {
 
 // ── RECEIVE MESSAGES (POST) ───────────────────────────────────
 export async function POST(req: NextRequest) {
-  const body = await req.json() as {
+  let body: {
     object?: string
-    entry?: Array<{ messaging?: Array<Record<string, unknown>> }>
+    entry?: Array<{
+      messaging?: Array<{
+        sender?: { id: string }
+        message?: { text?: string; quick_reply?: { payload?: string } }
+        postback?: { payload?: string }
+      }>
+    }>
+  }
+
+  try {
+    body = await req.json()
+  } catch (err) {
+    console.error('Webhook JSON parse error:', err)
+    return new NextResponse('Invalid JSON Body', { status: 400 })
   }
 
   if (body.object !== 'page') {
     return new NextResponse('OK', { status: 200 })
   }
 
-  for (const entry of body.entry ?? []) {
-    const event = entry.messaging?.[0]
-    if (!event) continue
+  const entries = body.entry ?? []
+  const promises = entries.flatMap(entry => {
+    const events = entry.messaging ?? []
+    return events.map(async event => {
+      const psid = event.sender?.id
+      if (!psid) return
 
-    const sender  = event.sender as { id?: string } | undefined
-    const psid    = sender?.id
-    if (!psid) continue
+      console.log('EVENT from PSID:', psid)
 
-    console.log('EVENT from PSID:', psid)
+      const message = event.message
+      const postback = event.postback
 
-    const message  = event.message  as { text?: string } | undefined
-    const postback = event.postback as { payload?: string } | undefined
+      // Extract quick reply payload or fallback to postback payload
+      const payload = message?.quick_reply?.payload || postback?.payload
 
-    if (message?.text) {
-      await handleText(psid, String(message.text))
-    } else if (postback?.payload) {
-      await handlePostback(psid, String(postback.payload))
-    }
-  }
+      if (payload) {
+        await handlePostback(psid, payload)
+      } else if (message?.text) {
+        await handleText(psid, message.text)
+      }
+    })
+  })
+
+  // Process all incoming events concurrently
+  await Promise.all(promises)
 
   return new NextResponse('OK', { status: 200 })
 }
@@ -173,11 +192,11 @@ async function handleText(psid: string, text: string) {
   const session = getSession(psid)
   const t = text.trim()
 
-  // Mid-order flow takes priority
+  // Mid-order flow text inputs take priority
   if (session.step === 'waiting_phone')    return handlePhone(psid, t)
   if (session.step === 'waiting_location') return handleLocation(psid, t)
 
-  // Quick reply buttons send their TITLE as text — detect them here
+  // Quick reply title text detection fallback
   if (t.includes('ខោខ្លី'))  return sendCategoryProducts(psid, 'shorts')
   if (t.includes('ខោវែង'))  return sendCategoryProducts(psid, 'pants')
   if (t.includes('អាវវែង')) return sendCategoryProducts(psid, 'polo')
@@ -191,15 +210,16 @@ async function handleText(psid: string, text: string) {
     return sendText(psid, `📞 សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នក:\n(ឧទាហរណ៍: 012 345 678)`)
   }
 
-  // Default → main menu
+  // Default → Main Menu
+  resetSession(psid)
   return sendMainMenu(psid)
 }
 
-// ── HANDLE POSTBACK ───────────────────────────────────────────
+// ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
 async function handlePostback(psid: string, payload: string) {
   const session = getSession(psid)
 
-  // Main menu
+  // Main menu navigation
   if (payload === 'GET_STARTED' || payload === 'MAIN_MENU') {
     resetSession(psid)
     return sendMainMenu(psid)
@@ -218,7 +238,8 @@ async function handlePostback(psid: string, payload: string) {
     if (!product) return
 
     session.currentProduct = product
-    session.selectedColors = []
+    session.selectedColor = ''
+    session.selectedSize = ''
     session.step = 'selecting_color'
     return sendColorSelection(psid, product)
   }
@@ -227,71 +248,92 @@ async function handlePostback(psid: string, payload: string) {
   if (payload.startsWith('COLOR_')) {
     if (session.step !== 'selecting_color' || !session.currentProduct) return
     const color = payload.replace('COLOR_', '').replace(/_/g, ' ')
-    // Add color if not already selected
-    if (!session.selectedColors.includes(color)) {
-      session.selectedColors.push(color)
-    }
-    const remaining = session.currentProduct.colors.filter(
-      c => !session.selectedColors.includes(c)
-    )
-    if (remaining.length === 0) {
-      // All colors selected, auto-proceed to size
-      return sendSizeSelection(psid, session.currentProduct)
-    }
-    await sendText(psid,
-      `✅ ${color} បានជ្រើស!\n\n` +
-      `ពណ៌ដែលបានជ្រើស: ${session.selectedColors.join(', ')}\n\n` +
-      `ជ្រើសពណ៌បន្ថែម ឬចុច ✅ បញ្ចប់:`
-    )
-    return sendColorButtons(psid, remaining)
-  }
-
-  // Done selecting colors
-  if (payload === 'COLORS_DONE') {
-    if (!session.currentProduct || session.selectedColors.length === 0) {
-      return sendText(psid, '⚠️ សូមជ្រើសរើសពណ៌យ៉ាងហោចណាស់មួយ!')
-    }
+    session.selectedColor = color
     session.step = 'selecting_size'
     return sendSizeSelection(psid, session.currentProduct)
   }
 
   // Size selection
   if (payload.startsWith('SIZE_')) {
-    if (!session.currentProduct) return
+    if (session.step !== 'selecting_size' || !session.currentProduct) return
     const size = payload.replace('SIZE_', '')
+    session.selectedSize = size
+    session.step = 'selecting_quantity'
+    return sendQuantitySelection(psid)
+  }
+
+  // Quantity selection
+  if (payload.startsWith('QTY_')) {
+    if (session.step !== 'selecting_quantity' || !session.currentProduct || !session.selectedColor || !session.selectedSize) return
+    const qty = parseInt(payload.replace('QTY_', ''), 10) || 1
     session.cart.push({
       product: session.currentProduct,
-      colors:  [...session.selectedColors],
-      size,
+      color: session.selectedColor,
+      size: session.selectedSize,
+      quantity: qty,
     })
-    session.step = 'idle'
-    session.currentProduct = null
-    session.selectedColors = []
 
     const lastItem = session.cart[session.cart.length - 1]
+    
+    // Reset selection states
+    session.step = 'idle'
+    session.currentProduct = null
+    session.selectedColor = ''
+    session.selectedSize = ''
+
     await sendText(psid,
       `✅ បានបន្ថែមទៅកន្ត្រក!\n\n` +
       `🛍️ ${lastItem.product.nameKh}\n` +
-      `🎨 ពណ៌: ${lastItem.colors.join(', ')}\n` +
+      `🎨 ពណ៌: ${lastItem.color}\n` +
       `📏 ទំហំ: ${lastItem.size}\n` +
-      `💰 $${lastItem.product.price.toFixed(2)}`
+      `🔢 ចំនួន: ${lastItem.quantity}\n` +
+      `💰 $${(lastItem.product.price * lastItem.quantity).toFixed(2)}`
     )
     return sendContinueOrCheckout(psid)
   }
 
-  // Checkout
+  // View Cart
+  if (payload === 'VIEW_CART') {
+    return sendContinueOrCheckout(psid)
+  }
+
+  // Clear Cart
+  if (payload === 'CLEAR_CART') {
+    resetSession(psid)
+    await sendText(psid, '🗑️ កន្ត្រកទំនិញត្រូវបានលុប។')
+    return sendMainMenu(psid)
+  }
+
+  // Checkout initiation
   if (payload === 'CHECKOUT') {
     if (session.cart.length === 0) {
       return sendText(psid, '⚠️ កន្ត្រករបស់អ្នកទទេ! សូមជ្រើសរើសផលិតផលមុន។')
     }
     session.step = 'waiting_phone'
-    return sendText(psid,
-      `📞 សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នក:\n(ឧទាហរណ៍: 012 345 678)`
-    )
+    return sendText(psid, `📞 សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នក:\n(ឧទាហរណ៍: 012 345 678)`)
+  }
+
+  // Shipping selection
+  if (payload.startsWith('SHIP_')) {
+    if (session.step !== 'selecting_shipping') return
+    const option = payload.replace('SHIP_', '') as 'PP' | 'PROV'
+    session.shippingOption = option === 'PP' ? 'phnom_penh' : 'province'
+    session.step = 'selecting_payment'
+    return sendPaymentSelection(psid)
+  }
+
+  // Payment selection
+  if (payload.startsWith('PAY_')) {
+    if (session.step !== 'selecting_payment') return
+    const method = payload.replace('PAY_', '') as 'COD' | 'ABA'
+    session.paymentMethod = method === 'COD' ? 'cod' : 'aba'
+    session.step = 'confirming'
+    return sendOrderSummary(psid)
   }
 
   // Confirm order
   if (payload === 'CONFIRM_ORDER') {
+    if (session.step !== 'confirming') return
     return confirmOrder(psid)
   }
 
@@ -370,9 +412,8 @@ async function sendColorSelection(psid: string, product: Product) {
   await sendText(psid,
     `🛍️ ${product.nameKh}\n` +
     `💰 $${product.price.toFixed(2)}\n` +
-    `📏 ទំហំ: ${product.sizes.join(', ')}\n\n` +
-    `🎨 សូមជ្រើសរើសពណ៌ (អាចជ្រើសបានច្រើន):\n` +
-    `(ចុច ✅ បញ្ចប់ នៅពេលអ្នកជ្រើសរួច)`
+    `📏 ទំហំដែលមាន: ${product.sizes.join(', ')}\n\n` +
+    `🎨 សូមជ្រើសរើសពណ៌:`
   )
   return sendColorButtons(psid, product.colors)
 }
@@ -384,16 +425,10 @@ async function sendColorButtons(psid: string, colors: string[]) {
     payload: `COLOR_${c.replace(/\s+/g, '_')}`,
   }))
 
-  colorReplies.push({
-    content_type: 'text',
-    title: '✅ បញ្ចប់',
-    payload: 'COLORS_DONE',
-  })
-
   await sendRequest({
     recipient: { id: psid },
     message: {
-      text: 'ជ្រើសរើសពណ៌:',
+      text: 'ពណ៌ដែលមាន:',
       quick_replies: colorReplies,
     },
   })
@@ -403,7 +438,7 @@ async function sendColorButtons(psid: string, colors: string[]) {
 async function sendSizeSelection(psid: string, product: Product) {
   const session = getSession(psid)
   await sendText(psid,
-    `✅ ពណ៌ដែលបានជ្រើស: ${session.selectedColors.join(', ')}\n\n` +
+    `🎨 ពណ៌ដែលបានជ្រើស: ${session.selectedColor}\n\n` +
     `📏 សូមជ្រើសរើសទំហំ:`
   )
 
@@ -422,20 +457,54 @@ async function sendSizeSelection(psid: string, product: Product) {
   })
 }
 
+// ── SEND QUANTITY SELECTION ───────────────────────────────────
+async function sendQuantitySelection(psid: string) {
+  const session = getSession(psid)
+  if (!session.currentProduct) return
+
+  await sendText(psid,
+    `🛍️ ${session.currentProduct.nameKh}\n` +
+    `🎨 ពណ៌: ${session.selectedColor}\n` +
+    `📏 ទំហំ: ${session.selectedSize}\n\n` +
+    `🔢 សូមជ្រើសរើសចំនួន (Quantity):`
+  )
+
+  const qtyReplies = [1, 2, 3, 4, 5].map(q => ({
+    content_type: 'text',
+    title: String(q),
+    payload: `QTY_${q}`,
+  }))
+
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: 'ចំនួន:',
+      quick_replies: qtyReplies,
+    },
+  })
+}
+
 // ── CONTINUE OR CHECKOUT ──────────────────────────────────────
 async function sendContinueOrCheckout(psid: string) {
   const session = getSession(psid)
+  
+  let subtotal = 0
   const cartSummary = session.cart
-    .map((item, i) => `${i + 1}. ${item.product.nameKh} | ${item.colors.join('+')} | ${item.size}`)
+    .map((item, i) => {
+      const cost = item.product.price * item.quantity
+      subtotal += cost
+      return `${i + 1}. ${item.product.nameKh} | ${item.color} | ${item.size} x${item.quantity} — $${cost.toFixed(2)}`
+    })
     .join('\n')
 
   await sendRequest({
     recipient: { id: psid },
     message: {
-      text: `🛒 កន្ត្រករបស់អ្នក:\n${cartSummary}\n\nតើអ្នកចង់បន្ថែមទៀតទេ?`,
+      text: `🛒 កន្ត្រកទំនិញរបស់អ្នក:\n━━━━━━━━━━━━━━━\n${cartSummary}\n━━━━━━━━━━━━━━━\n💵 សរុបបណ្តោះអាសន្ន: $${subtotal.toFixed(2)}\n\nតើអ្នកចង់បន្ថែមទៀតទេ?`,
       quick_replies: [
-        { content_type: 'text', title: '🛍️ បន្ថែមទៀត', payload: 'MAIN_MENU' },
-        { content_type: 'text', title: '🛒 បញ្ចប់',    payload: 'CHECKOUT'  },
+        { content_type: 'text', title: '🛍️ ទិញបន្ថែម', payload: 'MAIN_MENU' },
+        { content_type: 'text', title: '🗑️ លុបកន្ត្រក', payload: 'CLEAR_CART' },
+        { content_type: 'text', title: '💳 ទៅទូទាត់ប្រាក់', payload: 'CHECKOUT'  },
       ],
     },
   })
@@ -443,9 +512,19 @@ async function sendContinueOrCheckout(psid: string) {
 
 // ── ORDER FLOW: PHONE ─────────────────────────────────────────
 async function handlePhone(psid: string, text: string) {
-  const session  = getSession(psid)
-  session.phone  = text.trim()
-  session.step   = 'waiting_location'
+  const session = getSession(psid)
+  const phone = text.trim()
+
+  // Validate Cambodian phone number format (must starts with 0 or +855 and contains 8-9 digits after)
+  const cleanPhone = phone.replace(/[\s\-()]/g, '')
+  const isCambodiaPhone = /^(?:\+855|0)\d{8,9}$/.test(cleanPhone)
+
+  if (!isCambodiaPhone) {
+    return sendText(psid, `⚠️ លេខទូរស័ព្ទមិនត្រឹមត្រូវឡើយ។ សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នកម្តងទៀត:\n(ឧទាហរណ៍: 012 345 678)`)
+  }
+
+  session.phone = phone
+  session.step = 'waiting_location'
   return sendText(psid,
     `📞 ${session.phone} ✅\n\n` +
     `📍 សូមផ្ញើអាសយដ្ឋានដឹកជញ្ជូន:\n(ឧទាហរណ៍: ទួលគោក ភ្នំពេញ)`
@@ -454,27 +533,67 @@ async function handlePhone(psid: string, text: string) {
 
 // ── ORDER FLOW: LOCATION ──────────────────────────────────────
 async function handleLocation(psid: string, text: string) {
-  const session    = getSession(psid)
+  const session = getSession(psid)
   session.location = text.trim()
-  session.step     = 'confirming'
-  return sendOrderSummary(psid)
+  session.step = 'selecting_shipping'
+  return sendShippingSelection(psid)
+}
+
+// ── SEND SHIPPING SELECTION ───────────────────────────────────
+async function sendShippingSelection(psid: string) {
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: `🛵 សូមជ្រើសរើសតំបន់ដឹកជញ្ជូន (Shipping Option):`,
+      quick_replies: [
+        { content_type: 'text', title: '🛵 ភ្នំពេញ ($1.50)', payload: 'SHIP_PP' },
+        { content_type: 'text', title: '🚚 ខេត្ត ($2.50)', payload: 'SHIP_PROV' },
+      ],
+    },
+  })
+}
+
+// ── SEND PAYMENT SELECTION ────────────────────────────────────
+async function sendPaymentSelection(psid: string) {
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: `💳 សូមជ្រើសរើសវិធីទូទាត់ប្រាក់ (Payment Method):`,
+      quick_replies: [
+        { content_type: 'text', title: '💵 ទូទាត់ពេលទទួល (COD)', payload: 'PAY_COD' },
+        { content_type: 'text', title: '🏦 វេរតាម ABA Bank', payload: 'PAY_ABA' },
+      ],
+    },
+  })
 }
 
 // ── SEND ORDER SUMMARY ────────────────────────────────────────
 async function sendOrderSummary(psid: string) {
   const session = getSession(psid)
 
-  const itemLines = session.cart.map((item, i) =>
-    `${i + 1}. ${item.product.nameKh}\n   🎨 ${item.colors.join(', ')} | 📏 ${item.size} | 💰 $${item.product.price.toFixed(2)}`
-  ).join('\n')
+  let itemsSubtotal = 0
+  const itemLines = session.cart.map((item, i) => {
+    const cost = item.product.price * item.quantity
+    itemsSubtotal += cost
+    return `${i + 1}. ${item.product.nameKh}\n   🎨 ${item.color} | 📏 ${item.size} | 🔢 x${item.quantity} | 💰 $${cost.toFixed(2)}`
+  }).join('\n')
+
+  const shippingFee = session.shippingOption === 'phnom_penh' ? 1.50 : 2.50
+  const grandTotal = itemsSubtotal + shippingFee
+  const shippingLabel = session.shippingOption === 'phnom_penh' ? 'ភ្នំពេញ ($1.50)' : 'តាមខេត្ត ($2.50)'
+  const paymentLabel = session.paymentMethod === 'cod' ? 'ប្រគល់ប្រាក់ពេលទទួល (COD)' : 'ABA Bank (វេរប្រាក់)'
 
   await sendText(psid,
     `📋 សង្ខេបការបញ្ជាទិញ:\n` +
     `━━━━━━━━━━━━━━━\n` +
     `${itemLines}\n` +
     `━━━━━━━━━━━━━━━\n` +
-    `📞 ${session.phone}\n` +
-    `📍 ${session.location}`
+    `🛵 ដឹកជញ្ជូន: ${shippingLabel}\n` +
+    `💳 វិធីទូទាត់: ${paymentLabel}\n` +
+    `💵 សរុបចុងក្រោយ (Grand Total): $${grandTotal.toFixed(2)}\n` +
+    `━━━━━━━━━━━━━━━\n` +
+    `📞 ទូរស័ព្ទ: ${session.phone}\n` +
+    `📍 អាសយដ្ឋាន: ${session.location}`
   )
 
   await sendRequest({
@@ -493,28 +612,47 @@ async function sendOrderSummary(psid: string) {
 async function confirmOrder(psid: string) {
   const session = getSession(psid)
 
+  const itemsSubtotal = session.cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0)
+  const shippingFee = session.shippingOption === 'phnom_penh' ? 1.50 : 2.50
+  const grandTotal = itemsSubtotal + shippingFee
+
   // Reply to customer
-  await sendText(psid,
-    `🎉 អរគុណសម្រាប់ការបញ្ជាទិញ!\n` +
-    `យើងនឹងទំនាក់ទំនងអ្នកឆាប់ៗ 🙏\n` +
-    `DORMAX — Simple Style For Man 🇰🇭`
-  )
+  if (session.paymentMethod === 'aba') {
+    await sendText(psid,
+      `🎉 អរគុណសម្រាប់ការបញ្ជាទិញ!\n\n` +
+      `🏦 សូមវេរប្រាក់ចំនួន $${grandTotal.toFixed(2)} មកកាន់គណនី ABA របស់យើង៖\n` +
+      `• ឈ្មោះគណនី: DORMAX STORE\n` +
+      `• លេខគណនី: 000 111 222\n\n` +
+      `បន្ទាប់ពីវេររួច សូមផ្ញើរូបភាពវិក្កយបត្រ (Screenshot) មកទីនេះ។ យើងនឹងទំនាក់ទំនងទៅអ្នកភ្លាមៗ 🙏`
+    )
+  } else {
+    await sendText(psid,
+      `🎉 អរគុណសម្រាប់ការបញ្ជាទិញ!\n` +
+      `យើងនឹងទំនាក់ទំនងអ្នកឆាប់ៗដើម្បីដឹកជញ្ជូន 🙏\n` +
+      `DORMAX — Simple Style For Man 🇰🇭`
+    )
+  }
 
   // Send Telegram notification
   await sendTelegramNotification(session)
 
   // Log to console
-  console.log('🛒 NEW ORDER:', JSON.stringify({
+  console.log('🛒 NEW ORDER CONTEXT:', JSON.stringify({
     cart: session.cart.map(i => ({
       product: i.product.name,
-      colors: i.colors,
+      color: i.color,
       size: i.size,
+      quantity: i.quantity,
       price: i.product.price,
     })),
     phone: session.phone,
     location: session.location,
+    shippingOption: session.shippingOption,
+    paymentMethod: session.paymentMethod,
+    grandTotal: grandTotal,
   }, null, 2))
 
+  // Clean up session completely to prevent memory leaks
   resetSession(psid)
 }
 
@@ -527,17 +665,29 @@ async function sendTelegramNotification(session: SessionState) {
     hour: '2-digit', minute: '2-digit', hour12: false,
   }).format(now)
 
-  const itemLines = session.cart.map(item =>
-    `📦 ${item.product.name}\n🎨 ពណ៌: ${item.colors.join(', ')}\n📏 ទំហំ: ${item.size} | 💰 $${item.product.price.toFixed(2)}`
-  ).join('\n\n')
+  let itemsSubtotal = 0
+  const itemLines = session.cart.map(item => {
+    const cost = item.product.price * item.quantity
+    itemsSubtotal += cost
+    return `📦 ${item.product.name}\n🎨 ពណ៌: ${item.color}\n📏 ទំហំ: ${item.size} | 🔢 ចំនួន: ${item.quantity} | 💰 $${cost.toFixed(2)}`
+  }).join('\n\n')
+
+  const shippingFee = session.shippingOption === 'phnom_penh' ? 1.50 : 2.50
+  const grandTotal = itemsSubtotal + shippingFee
+  const shippingLabel = session.shippingOption === 'phnom_penh' ? 'Phnom Penh ($1.50)' : 'Province ($2.50)'
+  const paymentLabel = session.paymentMethod === 'cod' ? 'Cash on Delivery (COD)' : 'ABA Bank transfer'
 
   const message =
     `🛒 បញ្ជាទិញថ្មី — DORMAX\n` +
     `━━━━━━━━━━━━━━━\n` +
     `${itemLines}\n` +
     `━━━━━━━━━━━━━━━\n` +
-    `📞 ${session.phone}\n` +
-    `📍 ${session.location}\n` +
+    `🛵 ដឹកជញ្ជូន: ${shippingLabel}\n` +
+    `💳 វិធីទូទាត់: ${paymentLabel}\n` +
+    `💵 សរុបចុងក្រោយ (Grand Total): $${grandTotal.toFixed(2)}\n` +
+    `━━━━━━━━━━━━━━━\n` +
+    `📞 ទូរស័ព្ទ: ${session.phone}\n` +
+    `📍 អាសយដ្ឋាន: ${session.location}\n` +
     `🕐 ${cambodiaTime}`
 
   try {
@@ -570,7 +720,7 @@ async function sendText(psid: string, text: string) {
 
 async function sendTyping(psid: string) {
   await sendRequest({ recipient: { id: psid }, sender_action: 'typing_on' })
-  await new Promise(r => setTimeout(r, 800))
+  await new Promise(r => setTimeout(r, 500))
 }
 
 async function sendRequest(body: Record<string, unknown>) {
