@@ -103,3 +103,33 @@ model Cart {
   createdAt     DateTime @default(now()) @db.Timestamp(6)
   user          User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
+// ── MESSENGER BOT TABLES ──────────────────────────────────────
+
+model MessengerSession {
+  psid             String   @id
+  step             String   @default("idle")
+  pendingProductId String?
+  pendingColor     String?
+  cart             Json[]   @default([]) @db.Json
+  phone            String   @default("")
+  location         String   @default("")
+  shippingOption   String?
+  paymentMethod    String?
+  updatedAt        DateTime @updatedAt
+}
+
+model MessengerOrder {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  psid           String
+  items          Json[]   @db.Json
+  phone          String
+  location       String
+  shippingOption String
+  paymentMethod  String
+  subtotal       Decimal  @db.Decimal(12, 2)
+  shippingFee    Decimal  @db.Decimal(12, 2)
+  grandTotal     Decimal  @db.Decimal(12, 2)
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+}
+
