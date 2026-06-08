@@ -190,8 +190,119 @@ async function resetSession(psid: string) {
   await prisma.messengerSession.deleteMany({ where: { psid } })
 }
 
+// ── DORMAX CUSTOMER SERVICE SYSTEM PROMPT ──────────────────────
+const DORMAX_SYSTEM_PROMPT = `You are a friendly customer service assistant for DORMAX, a Cambodian men's clothing brand.
+
+## YOUR BEHAVIOR
+
+You handle messages in this exact priority order:
+
+### 1. ACTIVE FLOW — check first
+If the customer is mid-order (waiting for phone, address, size, or color), 
+continue that step. Never jump to free chat while a flow is in progress.
+
+### 2. TRIGGER KEYWORDS — check second
+If the customer says any of these, start the matching flow:
+- "ទិញ", "order", "បញ្ជាទិញ", "ចង់បាន" → start order flow
+- "តម្លៃ", "price", "ប៉ុន្មាន" → show product menu
+- "hi", "hello", "សួស្តី", "ជំរាបសួរ" → send welcome + product menu
+
+### 3. FREE CHAT — everything else
+Answer naturally and helpfully. If the question is about 
+products, shipping, or sizing, answer from your knowledge below.
+If you cannot help, say:
+"សូមទោស! ខ្ញុំនឹងភ្ជាប់អ្នកទៅកាន់ក្រុមការងារ 🙏"
+and hand off to the human inbox.
+
+---
+
+## PRODUCT KNOWLEDGE
+
+DORMAX sells men's clothing in Cambodia.
+
+Shorts (ខោខ្លី) — $13.99
+  Colors: Black, Navy, Grey, Khaki
+  Sizes: 29 30 31 32 34 36
+
+Tops / Polo (អាវវែង) — $12.50
+  Colors: Black, Brown, Cream, White
+  Sizes: S M L XL 2XL
+
+Long Pants (ខោវែង) — $15.50
+  Colors: Black, Navy, Army Green, Khaki
+  Sizes: 29 30 32 34 36
+
+Delivery: Phnom Penh same-day, provinces 1–3 days.
+Payment: cash on delivery.
+
+---
+
+## ORDER FLOW (step by step)
+
+Step 1 — Show the 3 category cards (Shorts / Tops / Pants)
+Step 2 — Customer picks a category → show all color photos for that category
+Step 3 — Customer picks a color → ask for size
+Step 4 — Size chosen → confirm item, ask "add more or checkout?"
+Step 5 — Checkout → ask for phone number
+Step 6 — Ask for delivery address
+Step 7 — Show order summary → ask confirm or cancel
+Step 8 — Confirmed → thank customer, send to Telegram
+
+---
+
+## TONE
+- Friendly, short messages
+- Mix Khmer and English naturally
+- Use emojis sparingly (✅ 🛍️ 📞 📍)
+- Never use technical jargon`
+
+// ── CALL GEMINI 2.5 FLASH API ─────────────────────────────────
+async function askGemini(text: string): Promise<string | null> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey) {
+    console.warn('GEMINI_API_KEY is not configured. Defaulting to silent human inbox routing.')
+    return null
+  }
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text }] }],
+          systemInstruction: { parts: [{ text: DORMAX_SYSTEM_PROMPT }] },
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 800,
+          },
+        }),
+      }
+    )
+
+    if (!response.ok) {
+      console.error('Gemini API returned error status:', response.status, await response.text())
+      return null
+    }
+
+    const data = await response.json()
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text
+    return generatedText ? generatedText.trim() : null
+  } catch (err) {
+    console.error('Error calling Gemini API:', err)
+    return null
+  }
+}
+
 // ── KNOWN TRIGGER KEYWORDS ────────────────────────────────────
-const TRIGGER_KEYWORDS = ['ខោខ្លី', 'ខោវែង', 'អាវ', 'បន្ថែម', 'ម៉ឺនុយ', 'បញ្ចប់', 'hello', 'hi', 'ស្វាគមន៍', 'ចាប់ផ្តើម']
+const TRIGGER_KEYWORDS = [
+  'ទិញ', 'order', 'បញ្ជាទិញ', 'ចង់បាន',
+  'តម្លៃ', 'price', 'ប៉ុន្មាន',
+  'hi', 'hello', 'សួស្តី', 'ជំរាបសួរ',
+  'ខោខ្លី', 'ខោវែង', 'អាវ',
+  'បន្ថែម', 'ម៉ឺនុយ', 'បញ្ចប់', 'ចាប់ផ្តើម'
+]
 
 function isKnownTrigger(text: string): boolean {
   const t = text.toLowerCase().trim()
@@ -280,25 +391,66 @@ async function handleText(psid: string, text: string) {
   if (session.step === 'waiting_location') return handleLocation(psid, t, session)
 
   // ── Layer 2: Known trigger keyword → start or resume bot flow
+  const lowerT = t.toLowerCase()
   if (isKnownTrigger(t)) {
-    if (t.includes('ខោខ្លី'))  return showCategoryColors(psid, 'shorts')
-    if (t.includes('ខោវែង'))  return showCategoryColors(psid, 'pants')
-    if (t.includes('អាវ'))     return showCategoryColors(psid, 'tops')
-    if (t.includes('បន្ថែម') || t.includes('ម៉ឺនុយ')) {
+    // 1. Direct category shortcuts
+    if (lowerT.includes('ខោខ្លី'))  return showCategoryColors(psid, 'shorts')
+    if (lowerT.includes('ខោវែង'))  return showCategoryColors(psid, 'pants')
+    if (lowerT.includes('អាវ'))     return showCategoryColors(psid, 'tops')
+
+    // 2. Welcome triggers: greeting keywords
+    if (
+      lowerT.includes('hi') ||
+      lowerT.includes('hello') ||
+      lowerT.includes('សួស្តី') ||
+      lowerT.includes('ជំរាបសួរ')
+    ) {
+      await resetSession(psid)
+      await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ DORMAX 🙏\nDORMAX — Simple Style For Man 🇰🇭`)
+      return sendMainMenu(psid)
+    }
+
+    // 3. Price / Menu / Order triggers
+    if (
+      lowerT.includes('តម្លៃ') ||
+      lowerT.includes('price') ||
+      lowerT.includes('ប៉ុន្មាន') ||
+      lowerT.includes('ម៉ឺនុយ') ||
+      lowerT.includes('បន្ថែម') ||
+      lowerT.includes('ទិញ') ||
+      lowerT.includes('order') ||
+      lowerT.includes('បញ្ជាទិញ') ||
+      lowerT.includes('ចង់បាន') ||
+      lowerT.includes('ចាប់ផ្តើម')
+    ) {
       await resetSession(psid)
       return sendMainMenu(psid)
     }
-    if (t.includes('បញ្ចប់') && session.cart.length > 0) {
+
+    if (lowerT.includes('បញ្ចប់') && session.cart.length > 0) {
       const updated = { ...session, step: 'waiting_phone' as const }
       await saveSession(psid, updated)
       return sendText(psid, `📞 សូមផ្ញើលេខទូរស័ព្ទរបស់អ្នក:\n(ឧទាហរណ៍: 012 345 678)`)
     }
-    // Generic greetings → send main menu
+
+    // Default fallback trigger response
     await resetSession(psid)
     return sendMainMenu(psid)
   }
 
-  // ── Layer 3: Free-form chat → stay silent, route to human inbox
+  // ── Layer 3: Free-form chat → route via Gemini AI
+  const aiResponse = await askGemini(t)
+  if (aiResponse) {
+    if (aiResponse.includes('សូមទោស! ខ្ញុំនឹងភ្ជាប់អ្នកទៅកាន់ក្រុមការងារ')) {
+      console.log(`[HUMAN_INBOX] Handoff requested by AI for PSID ${psid}: "${t}"`)
+      await sendText(psid, `សូមទោស! ខ្ញុំនឹងភ្ជាប់អ្នកទៅកាន់ក្រុមការងារ 🙏`)
+      return
+    }
+    // Answer naturally
+    return sendText(psid, aiResponse)
+  }
+
+  // Fallback if Gemini fails or is unconfigured
   console.log(`[HUMAN_INBOX] PSID ${psid}: "${t}"`)
   // No response — message lands naturally in Messenger Page Inbox for human agent
 }
