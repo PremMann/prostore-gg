@@ -10,6 +10,7 @@ function requireEnv(name: string): string {
 }
 
 // ── PRODUCT CATALOG (loaded from DB) ──────────────────────────
+
 type ColorOption = {
   name: string
   imageUrl: string
@@ -24,18 +25,17 @@ type BotProduct = {
   sizes: string[]
   image: string
   url: string
-  category: 'shorts' | 'tops' | 'pants'
 }
 
-const CATEGORY_MAP: Record<string, 'shorts' | 'tops' | 'pants'> = {
-  shirts: 'tops',
-  pants: 'pants',
-  accessories: 'tops',
+const CATEGORY_MAP: Record<string, true> = {
+  shirts: true,
+  pants: true,
+  accessories: true,
 }
 
 let cachedProducts: BotProduct[] | null = null
 let cacheTime = 0
-const CACHE_TTL = 60_000 // 1 minute
+const CACHE_TTL = 60_000
 
 async function getProducts(): Promise<BotProduct[]> {
   const now = Date.now()
@@ -54,7 +54,6 @@ async function getProducts(): Promise<BotProduct[]> {
         sizes: row.sizes,
         image: row.images[0] ?? '',
         url: `/product/${row.slug}`,
-        category: CATEGORY_MAP[row.category],
       }))
     cacheTime = now
     return cachedProducts
@@ -64,12 +63,8 @@ async function getProducts(): Promise<BotProduct[]> {
   }
 }
 
-async function getMatchingProducts(category: 'shorts' | 'tops' | 'pants'): Promise<BotProduct[]> {
-  const products = await getProducts()
-  return products.filter(p => p.category === category)
-}
-
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const mode      = searchParams.get('hub.mode')
@@ -84,6 +79,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ── RECEIVE MESSAGES (POST) ───────────────────────────────────
+
 export async function POST(req: NextRequest) {
   let body: {
     object?: string
@@ -139,15 +135,11 @@ export async function POST(req: NextRequest) {
 }
 
 // ── HANDLE TEXT ───────────────────────────────────────────────
+
 const GREETING_KEYWORDS = ['hi', 'hello', 'សួស្តី', 'ជំរាបសួរ']
 
 async function handleText(psid: string, text: string) {
   const t = text.toLowerCase().trim()
-
-  // Direct category shortcuts
-  if (t.includes('ខោខ្លី')) return showCategoryColors(psid, 'shorts')
-  if (t.includes('ខោវែង')) return showCategoryColors(psid, 'pants')
-  if (t.includes('អាវ'))    return showCategoryColors(psid, 'tops')
 
   // Greeting → welcome message + menu
   if (GREETING_KEYWORDS.some(kw => t.includes(kw))) {
@@ -155,11 +147,18 @@ async function handleText(psid: string, text: string) {
     return sendMainMenu(psid)
   }
 
-  // Everything else → show menu
-  return sendMainMenu(psid)
+  // Fallback → hint + See All Products quick reply
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: 'សួស្តី! សូមវាយ "hi" ដើម្បីមើលផលិតផល 🛍️',
+      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
+    },
+  })
 }
 
 // ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
+
 async function handlePostback(psid: string, payload: string) {
   if (payload === 'GET_STARTED') {
     return sendMainMenu(psid)
@@ -169,29 +168,113 @@ async function handlePostback(psid: string, payload: string) {
     return sendMainMenu(psid)
   }
 
-  // Category selection
-  if (payload.startsWith('CAT_')) {
-    const cat = payload.replace('CAT_', '').toLowerCase() as 'shorts' | 'tops' | 'pants'
-    return showCategoryColors(psid, cat)
+  // Show product colors
+  if (payload.startsWith('SHOW_PRODUCT_')) {
+    const productId = payload.replace('SHOW_PRODUCT_', '')
+    return handleProductSelection(psid, productId)
   }
 
-  // Color selected → confirm + notify
+  // Color selected → send Telegram alert + re-send color options
   if (payload.startsWith('SELECT_COLOR_')) {
-    await sendText(psid, 'We will contact to you soon 🙏')
-    await sendTelegramAlert()
-    return
+    const rest = payload.replace('SELECT_COLOR_', '')
+    const underscoreIdx = rest.indexOf('_')
+    const productId = underscoreIdx === -1 ? rest : rest.slice(0, underscoreIdx)
+    const colorName = underscoreIdx === -1 ? '' : rest.slice(underscoreIdx + 1).replace(/_/g, ' ')
+
+    const products = await getProducts()
+    const product = products.find(p => p.id === productId)
+    if (product) {
+      await sendTelegramAlert(product.nameKh || product.name, colorName)
+    }
+
+    // Re-send the same product colors so user can tap another color
+    return handleProductSelection(psid, productId)
   }
 }
 
+// ── SHOW PRODUCT + COLOR QUICK REPLIES ────────────────────────
+
+async function handleProductSelection(psid: string, productId: string) {
+  const products = await getProducts()
+  const product = products.find(p => p.id === productId)
+  if (!product) return sendMainMenu(psid)
+
+  await sendTyping(psid)
+
+  // Single product card with image, name, price
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'generic',
+          elements: [{
+            title: product.nameKh || product.name,
+            subtitle: `💰 $${product.price.toFixed(2)}`,
+            image_url: product.image,
+          }],
+        },
+      },
+    },
+  })
+
+  // Colors as quick replies
+  const quickReplies = product.colors.map(color => ({
+    content_type: 'text' as const,
+    title: `🎨 ${color.name}`,
+    payload: `SELECT_COLOR_${product.id}_${color.name.replace(/\s+/g, '_')}`,
+  }))
+
+  quickReplies.push({
+    content_type: 'text',
+    title: '🔙 ត្រឡប់ក្រោយ',
+    payload: 'MAIN_MENU',
+  })
+
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: 'ជ្រើសរើសពណ៌:',
+      quick_replies: quickReplies,
+    },
+  })
+}
+
+// ── MAIN MENU CAROUSEL (dynamic from DB) ──────────────────────
+
+async function sendMainMenu(psid: string) {
+  const products = await getProducts()
+  if (products.length === 0) {
+    return sendText(psid, 'សូមទោស មិនទាន់មានផលិតផលនៅឡើយទេ 🙏')
+  }
+
+  await sendTyping(psid)
+
+  const elements = products.slice(0, 10).map(p => ({
+    title: p.nameKh || p.name,
+    subtitle: `💰 $${p.price.toFixed(2)}`,
+    image_url: p.image,
+    buttons: [{ type: 'postback', title: 'មើលពណ៌', payload: `SHOW_PRODUCT_${p.id}` }],
+  }))
+
+  await sendRequest({
+    recipient: { id: psid },
+    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
+  })
+}
+
 // ── TELEGRAM ALERT ────────────────────────────────────────────
-async function sendTelegramAlert() {
+
+async function sendTelegramAlert(productName: string, colorName: string) {
   try {
+    const text = `🔔 Customer interested in\n📍 Product: ${productName}\n🎨 Color: ${colorName}`
     const res = await fetch(
       `https://api.telegram.org/bot${requireEnv('TELEGRAM_BOT_TOKEN')}/sendMessage`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: requireEnv('TELEGRAM_CHAT_ID'), text: 'new protaintal customer' }),
+        body: JSON.stringify({ chat_id: requireEnv('TELEGRAM_CHAT_ID'), text }),
       }
     )
     if (!res.ok) {
@@ -204,75 +287,8 @@ async function sendTelegramAlert() {
   }
 }
 
-// ── MAIN MENU CAROUSEL ────────────────────────────────────────
-async function sendMainMenu(psid: string) {
-  const elements = [
-    {
-      title:     '👖 ខោខ្លី (Shorts)',
-      subtitle:  'ចាប់ពី $13.99 | ពណ៌ច្រើនជម្រើស',
-      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
-      buttons: [{ type: 'postback', title: 'មើលខោខ្លី និងតម្លៃ', payload: 'CAT_SHORTS' }],
-    },
-    {
-      title:     '👕 អាវបុរស (Tops)',
-      subtitle:  'ចាប់ពី $12.00 | ប៉ូឡូ និងអាវយឺត',
-      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg',
-      buttons: [{ type: 'postback', title: 'មើលអាវ និងតម្លៃ', payload: 'CAT_TOPS' }],
-    },
-    {
-      title:     '👖 ខោវែង (Pants)',
-      subtitle:  'ចាប់ពី $14.50 | ខោវែង DORMAX',
-      image_url: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg',
-      buttons: [{ type: 'postback', title: 'មើលខោវែង និងតម្លៃ', payload: 'CAT_PANTS' }],
-    },
-  ]
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
-  })
-}
-
-// ── COLOR CARDS PER CATEGORY ──────────────────────────────────
-async function showCategoryColors(psid: string, category: 'shorts' | 'tops' | 'pants') {
-  const products = await getMatchingProducts(category)
-  if (products.length === 0) return sendMainMenu(psid)
-
-  await sendTyping(psid)
-
-  const elements: object[] = []
-  for (const p of products) {
-    for (const color of p.colors) {
-      elements.push({
-        title:     `${p.nameKh} — ${color.name}`,
-        subtitle:  `💰 $${p.price.toFixed(2)} | 📏 ទំហំ: ${p.sizes.join(' ')}`,
-        image_url: color.imageUrl,
-        buttons: [{
-          type: 'postback',
-          title: '🛍️ ជ្រើសរើស',
-          payload: `SELECT_COLOR_${p.id}_${color.name.replace(/\s+/g, '_')}`,
-        }],
-      })
-      if (elements.length === 10) break
-    }
-    if (elements.length === 10) break
-  }
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
-  })
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'ឬត្រឡប់ទៅម៉ឺនុយដើម:',
-      quick_replies: [{ content_type: 'text', title: '🔙 ម៉ឺនុយដើម', payload: 'MAIN_MENU' }],
-    },
-  })
-}
-
 // ── HELPERS ───────────────────────────────────────────────────
+
 async function sendText(psid: string, text: string) {
   await sendRequest({ recipient: { id: psid }, message: { text } })
 }
