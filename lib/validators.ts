@@ -9,9 +9,15 @@ const currency = z
   );
 
 
+const colorOptionSchema = z.object({
+  name: z.string().min(1, 'Color name is required'),
+  imageUrl: z.string().min(1, 'Color image URL is required'),
+});
+
 // Schema for inserting a new product
 export const insertProductSchema = z.object({
   name: z.string().min(3, 'Name must be at least 3 characters'),
+  nameKh: z.string().default(''),
   slug: z.string().min(3, 'Slug must be at least 3 characters'),
   productCode: z.string().optional().nullable(),
   category: z.string().min(3, 'Category must be at least 3 characters'),
@@ -20,7 +26,7 @@ export const insertProductSchema = z.object({
   stock: z.coerce.number(),
   images: z.array(z.string()).min(1, 'Product must have at least one image'),
   sizes: z.array(z.string()).default([]),
-  colors: z.array(z.string()).default([]),
+  colors: z.array(colorOptionSchema).default([]),
   isFeatured: z.boolean(),
   banner: z.string().nullable(),
   price: currency,
@@ -82,3 +88,4 @@ export const insertUserSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.string().default('user'),
 });
+

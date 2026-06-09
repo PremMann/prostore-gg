@@ -1,12 +1,22 @@
 import { z } from 'zod';
 import { insertProductSchema, insertCartSchema, cartItemSchema } from '@/lib/validators';
 
-export type Product = z.infer<typeof insertProductSchema> & {
+export type Product = Omit<z.infer<typeof insertProductSchema>, 'colors'> & {
   id: string;
-  productCode?: string | null; // Allow null to match Prisma's optional String?
+  productCode?: string | null;
   rating: string;
   numReviews: number;
   createdAt: Date;
+  colors: { name: string; imageUrl: string }[];
+};
+
+export type PrismaProduct = Omit<z.infer<typeof insertProductSchema>, 'colors'> & {
+  id: string;
+  productCode?: string | null;
+  rating: string;
+  numReviews: number;
+  createdAt: Date;
+  colors: unknown;
 };
 
 export type Cart = z.infer<typeof insertCartSchema>;

@@ -125,24 +125,24 @@ const CatalogProductCard = ({ product }: { product: Product }) => {
 
                     {hasColors && (
                         <div className="flex flex-wrap gap-2">
-                            {product.colors.map((color) => (
+                            {(product.colors as { name: string; imageUrl: string }[]).map((color) => (
                                 <button
-                                    key={color}
+                                    key={color.name}
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        setSelectedColor(color);
+                                        setSelectedColor(color.name);
                                     }}
                                     className={cn(
                                         "w-6 h-6 rounded-full border border-zinc-200 dark:border-zinc-700 flex items-center justify-center transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-black dark:focus:ring-white",
-                                        selectedColor === color ? "ring-2 ring-offset-1 ring-black dark:ring-white scale-110" : ""
+                                        selectedColor === color.name ? "ring-2 ring-offset-1 ring-black dark:ring-white scale-110" : ""
                                     )}
-                                    style={{ backgroundColor: color.toLowerCase() }}
-                                    title={color}
+                                    style={{ backgroundColor: color.name.toLowerCase() }}
+                                    title={color.name}
                                 >
-                                    {selectedColor === color && (
+                                    {selectedColor === color.name && (
                                         <Check className="w-3 h-3 text-white mix-blend-difference" />
                                     )}
-                                    <span className="sr-only">{color}</span>
+                                    <span className="sr-only">{color.name}</span>
                                 </button>
                             ))}
                         </div>

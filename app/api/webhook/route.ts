@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '../../../db/prisma'
 
-const REQUIRED_ENV = ['PAGE_ACCESS_TOKEN', 'VERIFY_TOKEN', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID'] as const
-const MISSING_ENV  = REQUIRED_ENV.filter(key => !process.env[key])
-if (MISSING_ENV.length > 0) {
-  throw new Error(`Missing required env vars: ${MISSING_ENV.join(', ')}`)
+const GRAPH_URL = 'https://graph.facebook.com/v19.0/me/messages'
+
+function requireEnv(name: string): string {
+  const val = process.env[name]
+  if (!val) throw new Error(`Missing required env var: ${name}`)
+  return val
 }
 
-const PAGE_ACCESS_TOKEN  = process.env.PAGE_ACCESS_TOKEN!
-const VERIFY_TOKEN       = process.env.VERIFY_TOKEN!
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN!
-const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID!
-const GRAPH_URL          = 'https://graph.facebook.com/v19.0/me/messages'
-
-// ── PRODUCT CATALOG ───────────────────────────────────────────
+// ── PRODUCT CATALOG (loaded from DB) ──────────────────────────
 type ColorOption = {
   name: string
   imageUrl: string
 }
 
-type Product = {
+type BotProduct = {
   id: string
   name: string
   nameKh: string
@@ -27,96 +24,49 @@ type Product = {
   sizes: string[]
   image: string
   url: string
-  category: 'shorts' | 'pants' | 'polo' | 'tshirt'
+  category: 'shorts' | 'tops' | 'pants'
 }
 
-const PRODUCTS: Product[] = [
-  {
-    id: 'CHINO_SHORTS',
-    name: 'DORMAX Chino Shorts',
-    nameKh: 'ខោខ្លី DORMAX',
-    price: 13.99,
-    colors: [
-      { name: '⚫ Black',  imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg' },
-      { name: '🔵 Navy',  imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Chino+Shorts' },
-      { name: '🩶 Grey',  imageUrl: 'https://via.placeholder.com/600x400/808080/ffffff?text=Grey+Chino+Shorts' },
-      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Chino+Shorts' },
-      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+Chino+Shorts' },
-    ],
-    sizes: ['29', '30', '31', '32', '34', '35'],
-    image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
-    url: 'https://prostore-gg.vercel.app/product/dormax',
-    category: 'shorts',
-  },
-  {
-    id: 'CHINO_JOGGERS',
-    name: 'Chino Joggers',
-    nameKh: 'ខោ Jogger DORMAX',
-    price: 14.50,
-    colors: [
-      { name: '⚫ Black',      imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1775106306643_IMAGE_2026-03-13_12%3A14%3A54-Cty6miifN0Nfcj3v3iU7NYt27aZaNf.jpg' },
-      { name: '🔵 Navy',      imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Chino+Joggers' },
-      { name: '🟢 Army Green', imageUrl: 'https://via.placeholder.com/600x400/4b5320/ffffff?text=Army+Green+Joggers' },
-      { name: '🟤 Khaki',     imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Joggers' },
-    ],
-    sizes: ['29', '30', '32', '34', '36'],
-    image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1775106306643_IMAGE_2026-03-13_12%3A14%3A54-Cty6miifN0Nfcj3v3iU7NYt27aZaNf.jpg',
-    url: 'https://prostore-gg.vercel.app/product/ignature-chino-joggers-dormax-series',
-    category: 'pants',
-  },
-  {
-    id: 'LONG_PANTS',
-    name: 'DORMAX Long Pants',
-    nameKh: 'ខោវែង DORMAX',
-    price: 15.50,
-    colors: [
-      { name: '⚫ Black',      imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg' },
-      { name: '🔵 Navy',      imageUrl: 'https://via.placeholder.com/600x400/000080/ffffff?text=Navy+Long+Pants' },
-      { name: '🟢 Army Green', imageUrl: 'https://via.placeholder.com/600x400/4b5320/ffffff?text=Army+Green+Long+Pants' },
-      { name: '🟤 Khaki',     imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+Long+Pants' },
-    ],
-    sizes: ['29', '30', '32', '34', '36'],
-    image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305172479_2026-01-26_11.42.01-CjK8tiQU6SrpCMTLgiJyZ61DOnk5Fr.jpg',
-    url: 'https://prostore-gg.vercel.app/product/long-pants',
-    category: 'pants',
-  },
-  {
-    id: 'POLO_SHIRT',
-    name: 'DORMAX Polo Shirt',
-    nameKh: 'អាវវែង Polo DORMAX',
-    price: 12.50,
-    colors: [
-      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg' },
-      { name: '🟤 Brown', imageUrl: 'https://via.placeholder.com/600x400/5c4033/ffffff?text=Brown+Polo+Shirt' },
-      { name: '🟡 Cream', imageUrl: 'https://via.placeholder.com/600x400/fffdd0/000000?text=Cream+Polo+Shirt' },
-      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+Polo+Shirt' },
-    ],
-    sizes: ['S', 'M', 'L', 'XL', '2XL'],
-    image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1770305187477_IMAGE_2026-01-20_23%3A02%3A34-rBpeAbq9F6BqSF8nfOIQuzXOzMgLiy.jpg',
-    url: 'https://prostore-gg.vercel.app/product/dormax01',
-    category: 'polo',
-  },
-  {
-    id: 'TSHIRT',
-    name: 'DORMAX T-Shirt',
-    nameKh: 'អាវខ្លី DORMAX',
-    price: 12.00,
-    colors: [
-      { name: '⚫ Black', imageUrl: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg' },
-      { name: '🟤 Khaki', imageUrl: 'https://via.placeholder.com/600x400/c3b091/ffffff?text=Khaki+T-Shirt' },
-      { name: '⚪ White', imageUrl: 'https://via.placeholder.com/600x400/ffffff/000000?text=White+T-Shirt' },
-    ],
-    sizes: ['M', 'L', 'XL', 'XXL'],
-    image: 'https://zqok3vn32ri21uvw.public.blob.vercel-storage.com/uploads/1772766535501_2026-02-26_22.04.02-eSPbBRIQ9F7KIGTo8rpLFPYKRwIGT6.jpg',
-    url: 'https://prostore-gg.vercel.app/product/dormax',
-    category: 'tshirt',
-  },
-]
+const CATEGORY_MAP: Record<string, 'shorts' | 'tops' | 'pants'> = {
+  shirts: 'tops',
+  pants: 'pants',
+  accessories: 'tops',
+}
 
-function getMatchingProducts(category: 'shorts' | 'tops' | 'pants'): Product[] {
-  if (category === 'shorts') return PRODUCTS.filter(p => p.category === 'shorts')
-  if (category === 'pants')  return PRODUCTS.filter(p => p.category === 'pants')
-  return PRODUCTS.filter(p => p.category === 'polo' || p.category === 'tshirt')
+let cachedProducts: BotProduct[] | null = null
+let cacheTime = 0
+const CACHE_TTL = 60_000 // 1 minute
+
+async function getProducts(): Promise<BotProduct[]> {
+  const now = Date.now()
+  if (cachedProducts && now - cacheTime < CACHE_TTL) return cachedProducts
+
+  try {
+    const rows = await prisma.product.findMany()
+    cachedProducts = rows
+      .filter(row => CATEGORY_MAP[row.category])
+      .map(row => ({
+        id: row.id,
+        name: row.name,
+        nameKh: row.nameKh,
+        price: Number(row.price),
+        colors: (row.colors as ColorOption[]) ?? [],
+        sizes: row.sizes,
+        image: row.images[0] ?? '',
+        url: `/product/${row.slug}`,
+        category: CATEGORY_MAP[row.category],
+      }))
+    cacheTime = now
+    return cachedProducts
+  } catch (err) {
+    console.error('Failed to load products from DB:', err)
+    return cachedProducts ?? []
+  }
+}
+
+async function getMatchingProducts(category: 'shorts' | 'tops' | 'pants'): Promise<BotProduct[]> {
+  const products = await getProducts()
+  return products.filter(p => p.category === category)
 }
 
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
@@ -126,7 +76,7 @@ export async function GET(req: NextRequest) {
   const token     = searchParams.get('hub.verify_token')
   const challenge = searchParams.get('hub.challenge')
 
-  if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+  if (mode === 'subscribe' && token === requireEnv('VERIFY_TOKEN')) {
     console.log('Webhook verified ✅')
     return new NextResponse(challenge, { status: 200 })
   }
@@ -237,11 +187,11 @@ async function handlePostback(psid: string, payload: string) {
 async function sendTelegramAlert() {
   try {
     const res = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+      `https://api.telegram.org/bot${requireEnv('TELEGRAM_BOT_TOKEN')}/sendMessage`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: 'new protaintal customer' }),
+        body: JSON.stringify({ chat_id: requireEnv('TELEGRAM_CHAT_ID'), text: 'new protaintal customer' }),
       }
     )
     if (!res.ok) {
@@ -285,7 +235,7 @@ async function sendMainMenu(psid: string) {
 
 // ── COLOR CARDS PER CATEGORY ──────────────────────────────────
 async function showCategoryColors(psid: string, category: 'shorts' | 'tops' | 'pants') {
-  const products = getMatchingProducts(category)
+  const products = await getMatchingProducts(category)
   if (products.length === 0) return sendMainMenu(psid)
 
   await sendTyping(psid)
@@ -333,7 +283,7 @@ async function sendTyping(psid: string) {
 }
 
 async function sendRequest(body: Record<string, unknown>) {
-  const res = await fetch(`${GRAPH_URL}?access_token=${PAGE_ACCESS_TOKEN}`, {
+  const res = await fetch(`${GRAPH_URL}?access_token=${requireEnv('PAGE_ACCESS_TOKEN')}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

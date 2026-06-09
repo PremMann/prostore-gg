@@ -38,6 +38,9 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
 
             {/* Product Name */}
             <h1 className='text-3xl lg:text-4xl font-bold tracking-tight'>{product.name}</h1>
+            {product.nameKh && (
+              <p className="text-lg text-muted-foreground mt-1">{product.nameKh}</p>
+            )}
 
             {/* Product Code */}
             {product.productCode && (

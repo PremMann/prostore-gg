@@ -18,8 +18,8 @@ import { Product } from "@/types";
 import { Upload, X } from "lucide-react";
 import Image from "next/image";
 import { PRODUCT_CATEGORIES, getSizesForCategory } from "@/lib/constants";
-import { TagInput, COLOR_SUGGESTIONS } from "@/components/ui/tag-input";
-// import { useRouter } from "next/navigation";
+import { TagInput } from "@/components/ui/tag-input";
+
 export default function ProductForm({
     setOpen,
     onSuccess,
@@ -33,6 +33,7 @@ export default function ProductForm({
     const [uploadingImages, setUploadingImages] = useState(false);
     const [formData, setFormData] = useState({
         name: product?.name || "",
+        nameKh: product?.nameKh || "",
         slug: product?.slug || "",
         productCode: product?.productCode || "",
         category: product?.category || "",
@@ -44,9 +45,10 @@ export default function ProductForm({
         isFeatured: product?.isFeatured || false,
         banner: product?.banner || "",
         sizes: product?.sizes || [] as string[],
-        colors: product?.colors || [] as string[],
+        colors: (product?.colors || []) as { name: string; imageUrl: string }[],
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [uploadingColorImage, setUploadingColorImage] = useState<number | null>(null);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -162,6 +164,7 @@ export default function ProductForm({
             // Prepare data
             const productData = {
                 name: formData.name,
+                nameKh: formData.nameKh,
                 slug: formData.slug,
                 productCode: formData.productCode,
                 category: formData.category,
@@ -224,6 +227,19 @@ export default function ProductForm({
                     />
                     {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
                 </div>
+                <div className="space-y-2">
+                    <Label htmlFor="nameKh">Khmer Name</Label>
+                    <Input
+                        id="nameKh"
+                        name="nameKh"
+                        value={formData.nameKh}
+                        onChange={handleChange}
+                        placeholder="ឈ្មោះផលិតផល"
+                    />
+                    {errors.nameKh && <p className="text-sm text-red-500">{errors.nameKh}</p>}
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                     <Label htmlFor="slug">Slug (Auto-generated)</Label>
                     <Input
@@ -339,13 +355,105 @@ export default function ProductForm({
                     />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="colors">Colors</Label>
-                    <TagInput
-                        value={formData.colors}
-                        onChange={(colors) => setFormData((prev) => ({ ...prev, colors }))}
-                        placeholder="Type color and press Enter"
-                        suggestions={COLOR_SUGGESTIONS}
-                    />
+                    <Label>Colors</Label>
+                    <div className="space-y-3">
+                        {formData.colors.map((color, index) => (
+                            <div key={index} className="flex items-start gap-2 p-3 border rounded-md">
+                                <div className="flex-1 space-y-2">
+                                    <Input
+                                        value={color.name}
+                                        onChange={(e) => {
+                                            const updated = [...formData.colors];
+                                            updated[index] = { ...updated[index], name: e.target.value };
+                                            setFormData((prev) => ({ ...prev, colors: updated }));
+                                        }}
+                                        placeholder="Color name"
+                                    />
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            id={`color-image-${index}`}
+                                            onChange={async (e) => {
+                                                const file = e.target.files?.[0];
+                                                if (!file) return;
+                                                setUploadingColorImage(index);
+                                                try {
+                                                    const fd = new FormData();
+                                                    fd.append("file", file);
+                                                    const res = await fetch("/api/upload", { method: "POST", body: fd });
+                                                    const data = await res.json();
+                                                    if (data.url) {
+                                                        const updated = [...formData.colors];
+                                                        updated[index] = { ...updated[index], imageUrl: data.url };
+                                                        setFormData((prev) => ({ ...prev, colors: updated }));
+                                                        toast.success("Color image uploaded");
+                                                    }
+                                                } catch {
+                                                    toast.error("Failed to upload color image");
+                                                } finally {
+                                                    setUploadingColorImage(null);
+                                                    e.target.value = "";
+                                                }
+                                            }}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => document.getElementById(`color-image-${index}`)?.click()}
+                                            disabled={uploadingColorImage === index}
+                                        >
+                                            {uploadingColorImage === index ? "Uploading..." : "Upload Image"}
+                                        </Button>
+                                        {color.imageUrl && (
+                                            <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                                                Uploaded
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                                {color.imageUrl && (
+                                    <div className="relative w-16 h-16 flex-shrink-0">
+                                        <Image
+                                            src={color.imageUrl}
+                                            alt={color.name}
+                                            fill
+                                            className="object-cover rounded border"
+                                        />
+                                    </div>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="flex-shrink-0 text-red-500"
+                                    onClick={() => {
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            colors: prev.colors.filter((_, i) => i !== index),
+                                        }));
+                                    }}
+                                >
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    colors: [...prev.colors, { name: "", imageUrl: "" }],
+                                }));
+                            }}
+                        >
+                            + Add Color
+                        </Button>
+                    </div>
                 </div>
             </div>
 
@@ -441,14 +549,13 @@ export default function ProductForm({
                 {errors.banner && <p className="text-sm text-red-500">{errors.banner}</p>}
 
                 {/* Banner Preview */}
-                {formData.banner && (
-                    <div className="relative mt-2">
+                {formData.banner ? (
+                    <div className="relative mt-2 w-full h-32">
                         <Image
                             src={formData.banner}
                             alt="Banner"
-                            width={320} // Adjust width and height as needed
-                            height={128}
-                            className="w-full h-32 object-cover rounded border"
+                            fill
+                            className="object-cover rounded border"
                         />
                         <button
                             type="button"
@@ -458,7 +565,7 @@ export default function ProductForm({
                             <X className="h-3 w-3" />
                         </button>
                     </div>
-                )}
+                ) : null}
             </div>
 
             <div className="flex items-center space-x-2">

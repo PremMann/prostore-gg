@@ -17,6 +17,7 @@ datasource db {
 model Product {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String
+  nameKh      String   @default("")
   slug        String   @unique(map: "product_slug_idx")
   productCode String?  @unique
   category    String
@@ -31,7 +32,7 @@ model Product {
   banner      String?
   createdAt   DateTime @default(now()) @db.Timestamp(6)
   sizes       String[] @default([])
-  colors      String[] @default([])
+  colors      Json     @default("[]") @db.Json
 }
 
 model User {
