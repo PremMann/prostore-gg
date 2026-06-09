@@ -1,5 +1,6 @@
 -- Add Khmer name and change colors to JSON on Product
 ALTER TABLE "Product" ADD COLUMN "nameKh" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Product" ALTER COLUMN "colors" DROP DEFAULT;
 ALTER TABLE "Product" ALTER COLUMN "colors" TYPE JSON USING '[]'::json;
 ALTER TABLE "Product" ALTER COLUMN "colors" SET DEFAULT '[]';
 
