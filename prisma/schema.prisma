@@ -106,19 +106,6 @@ model Cart {
 
 // ── MESSENGER BOT TABLES ──────────────────────────────────────
 
-model MessengerSession {
-  psid             String   @id
-  step             String   @default("idle")
-  pendingProductId String?
-  pendingColor     String?
-  cart             Json[]   @default([]) @db.Json
-  phone            String   @default("")
-  location         String   @default("")
-  shippingOption   String?
-  paymentMethod    String?
-  updatedAt        DateTime @updatedAt
-}
-
 model MessengerOrder {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   psid           String
