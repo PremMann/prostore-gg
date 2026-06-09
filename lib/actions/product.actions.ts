@@ -1,5 +1,6 @@
 "use server"
 import { prisma } from "@/db/prisma";
+import { Prisma } from "@prisma/client";
 import { convertToPlainObject, formatError } from "../utils";
 import { LATEST_PRODUCTS_LIMIT } from "../constants";
 import { insertProductSchema } from "../validators";
@@ -83,9 +84,15 @@ export async function getProductBySlug(slug: string) {
         numReviews: product.numReviews,
         isFeatured: product.isFeatured,
         banner: product.banner,
+        weight: product.weight ? Number(product.weight) : null,
+        dimensions: product.dimensions as { length?: number; width?: number; height?: number; unit?: string } | null,
+        tags: product.tags,
+        metaTitle: product.metaTitle,
+        metaDescription: product.metaDescription,
         createdAt: product.createdAt,
         sizes: product.sizes,
         colors: product.colors as { name: string; imageUrl: string }[],
+        variants: product.variants as { size: string; color: string; stock: number; sku: string; priceAdjustment: number }[],
     };
 }
 
@@ -124,12 +131,13 @@ export async function getAllProducts(params: GetProductsParams = {}) {
         // Build where clause for filtering
         const whereConditions: object[] = [];
 
-        // Search filter (name or description)
+        // Search filter (name, description, or SKU)
         if (search) {
             whereConditions.push({
                 OR: [
                     { name: { contains: search, mode: 'insensitive' } },
                     { description: { contains: search, mode: 'insensitive' } },
+                    { productCode: { contains: search, mode: 'insensitive' } },
                 ],
             });
         }
@@ -215,8 +223,12 @@ export async function createProduct(data: z.infer<typeof insertProductSchema>) {
             return { success: false, message: "Product with this slug already exists" };
         }
 
+        const { dimensions: dims, ...rest } = product;
         await prisma.product.create({
-            data: product
+            data: {
+                ...rest,
+                dimensions: dims ?? Prisma.JsonNull,
+            },
         });
 
         revalidatePath("/admin/dashboard");
@@ -263,9 +275,13 @@ export async function updateProduct(data: z.infer<typeof insertProductSchema> & 
 
         if (!productExists) throw new Error("Product not found");
 
+        const { dimensions: dims, ...rest } = product;
         await prisma.product.update({
             where: { id },
-            data: product,
+            data: {
+                ...rest,
+                dimensions: dims ?? Prisma.JsonNull,
+            },
         });
 
         revalidatePath("/admin/dashboard");

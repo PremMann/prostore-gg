@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
     LayoutDashboard,
@@ -21,6 +21,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Home,
+    AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,10 +47,15 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog";
 import ProductForm from "./product-form";
-import { deleteProduct, getAllProducts, getAllCategories } from "@/lib/actions/product.actions";
-import { getAllUsers, deleteUser, signOutUser } from "@/lib/actions/user.actions";
-import { Product, User } from "@/types";
 import UserForm from "./user-form";
+import { ProductTable } from "./product-table";
+import { CSVImportModal } from "./product-table/CSVImportModal";
+import { useProducts } from "@/hooks/useProducts";
+import { useUsers } from "@/hooks/useUsers";
+import { getInventoryAlerts } from "@/lib/actions/inventory.actions";
+import { signOutUser } from "@/lib/actions/user.actions";
+import { exportProductsToCSV } from "@/lib/export";
+import { Product, User } from "@/types";
 
 // --- Mock Data ---
 
@@ -97,124 +103,57 @@ const RECENT_ACTIVITY = [
 
 export default function AdminDashboard() {
     const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "products">("dashboard");
-    const [isDarkMode, setIsDarkMode] = useState(true); // Default to dark mode
-    const [users, setUsers] = useState<User[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
-    const [isLoading, setIsLoading] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(true);
 
-    // Pagination state
-    const [page, setPage] = useState(1);
-    const [limit] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalUsers, setTotalUsers] = useState(0);
+    // Product State (React Query)
+    const {
+        products,
+        pagination: productPagination,
+        params: productParams,
+        isLoading: productsLoading,
+        deleteProduct: deleteProductMutation,
+        setParams: setProductParams,
+    } = useProducts();
 
-    // Filter and sort state
-    const [roleFilter, setRoleFilter] = useState<string>("");
-    const [sortBy, setSortBy] = useState<'name' | 'email' | 'createdAt' | 'role'>('createdAt');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-    // Product State
-    const [products, setProducts] = useState<Product[]>([]);
-    const [productPage, setProductPage] = useState(1);
-    const [productTotalPages, setProductTotalPages] = useState(1);
-    const [productTotalCount, setProductTotalCount] = useState(0);
-    const [productSearch, setProductSearch] = useState("");
-    const [categoryFilter, setCategoryFilter] = useState("");
-    const [productSortBy, setProductSortBy] = useState<'name' | 'price' | 'rating' | 'createdAt'>('createdAt');
-    const [productSortOrder, setProductSortOrder] = useState<'asc' | 'desc'>('desc');
-    const [categories, setCategories] = useState<string[]>([]);
     const [isProductModalOpen, setIsProductModalOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [productToDelete, setProductToDelete] = useState<string | null>(null);
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+    const [isCSVImportOpen, setIsCSVImportOpen] = useState(false);
 
-    // User State
+    // User State (React Query)
+    const {
+        users,
+        pagination: userPagination,
+        params: userParams,
+        isLoading: usersLoading,
+        setSearch: setSearchQuery,
+        setRole: setRoleFilter,
+        setSortBy: setSortBy,
+        setSortOrder: setSortOrder,
+        deleteUser: deleteUserMutation,
+        setParams: setUserParams,
+    } = useUsers();
+
     const [isUserModalOpen, setIsUserModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isUserDeleteDialogOpen, setIsUserDeleteDialogOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState<string | null>(null);
 
+    // Low stock alerts
+    const [lowStockProducts, setLowStockProducts] = useState<Product[] | undefined>(undefined);
+
+    useEffect(() => {
+        getInventoryAlerts(15).then((res) => {
+            if (res.success && res.data) setLowStockProducts(res.data);
+        });
+    }, []);
+
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
     };
-
-    // Fetch Users Function
-    const fetchUsers = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const result = await getAllUsers({
-                page,
-                limit,
-                search: searchQuery,
-                role: roleFilter || undefined,
-                sortBy,
-                sortOrder,
-            });
-            if (result.success && result.data) {
-                setUsers(result.data.users);
-                setTotalPages(result.data.pagination.totalPages);
-                setTotalUsers(result.data.pagination.total);
-            } else {
-                toast.error(result.message || "Failed to fetch users");
-            }
-        } catch {
-            toast.error("Failed to fetch users");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [page, limit, searchQuery, roleFilter, sortBy, sortOrder]);
-
-    // Fetch users when users tab is active or when filters/pagination change
-    useEffect(() => {
-        if (activeTab === "users") {
-            fetchUsers();
-        }
-    }, [activeTab, fetchUsers]);
-
-    const refreshUsers = () => {
-        fetchUsers();
-    };
-
-    // Fetch products
-    useEffect(() => {
-        const fetchProducts = async () => {
-            if (activeTab === "products") {
-                setIsLoading(true);
-                try {
-                    // Fetch categories if not already loaded
-                    if (categories.length === 0) {
-                        const catResult = await getAllCategories();
-                        if (catResult.success && catResult.data) {
-                            setCategories(catResult.data as string[]);
-                        }
-                    }
-
-                    const result = await getAllProducts({
-                        page: productPage,
-                        limit, // Reuse same limit
-                        search: productSearch,
-                        category: categoryFilter || undefined,
-                        sortBy: productSortBy,
-                        sortOrder: productSortOrder,
-                    });
-
-                    if (result.success && result.data) {
-                        setProducts(result.data.products as unknown as Product[]);
-                        setProductTotalPages(result.data.pagination.totalPages);
-                        setProductTotalCount(result.data.pagination.total);
-                    } else {
-                        toast.error(result.message || "Failed to fetch products");
-                    }
-                } catch {
-                    toast.error("Failed to fetch products");
-                } finally {
-                    setIsLoading(false);
-                }
-            }
-        };
-        fetchProducts();
-    }, [activeTab, productPage, limit, productSearch, categoryFilter, productSortBy, productSortOrder, categories.length]);
 
     // Sync dark mode with HTML element
     useEffect(() => {
@@ -225,7 +164,6 @@ export default function AdminDashboard() {
         }
     }, [isDarkMode]);
 
-    // Filter Users
     // User Management Handlers
     const confirmDeleteUser = (id: string) => {
         setUserToDelete(id);
@@ -234,76 +172,43 @@ export default function AdminDashboard() {
 
     const handleDeleteUser = async () => {
         if (!userToDelete) return;
-
-        setIsLoading(true);
-        try {
-            const result = await deleteUser(userToDelete);
-            if (result.success) {
-                toast.success(result.message);
-                setIsUserDeleteDialogOpen(false);
-                setUserToDelete(null);
-                refreshUsers();
-            } else {
-                toast.error(result.message);
-            }
-        } catch {
-            toast.error("An error occurred while deleting the user");
-        } finally {
-            setIsLoading(false);
-        }
+        await deleteUserMutation(userToDelete);
+        setIsUserDeleteDialogOpen(false);
+        setUserToDelete(null);
     };
 
-    const handleDeleteProduct = async () => {
-        if (!productToDelete) return;
-
-        setIsLoading(true);
-        try {
-            const result = await deleteProduct(productToDelete);
-            if (result.success) {
-                toast.success(result.message);
-                setIsDeleteDialogOpen(false);
-                setProductToDelete(null);
-                await refreshProducts();
-            } else {
-                toast.error(result.message);
-            }
-        } catch {
-            toast.error("An error occurred while deleting the product");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const confirmDelete = (id: string) => {
+    const confirmDeleteProduct = (id: string) => {
         setProductToDelete(id);
         setIsDeleteDialogOpen(true);
     };
 
-    // Refresh products after adding a new product
-    const refreshProducts = async () => {
-        if (activeTab === "products") {
-            setIsLoading(true);
-            try {
-                const result = await getAllProducts({
-                    page: productPage,
-                    limit,
-                    search: productSearch,
-                    category: categoryFilter || undefined,
-                    sortBy: productSortBy,
-                    sortOrder: productSortOrder,
-                });
+    const handleDeleteProduct = async () => {
+        if (!productToDelete) return;
+        await deleteProductMutation(productToDelete);
+        setIsDeleteDialogOpen(false);
+        setProductToDelete(null);
+    };
 
-                if (result.success && result.data) {
-                    setProducts(result.data.products as unknown as Product[]);
-                    setProductTotalPages(result.data.pagination.totalPages);
-                    setProductTotalCount(result.data.pagination.total);
-                }
-            } catch {
-                toast.error("Failed to refresh products");
-            } finally {
-                setIsLoading(false);
-            }
+    const handleExport = () => {
+        if (products.length === 0) {
+            toast.error("No products to export");
+            return;
         }
+        exportProductsToCSV(products, `products-export-${new Date().toISOString().split("T")[0]}.csv`);
+        toast.success(`Exported ${products.length} products`);
+    };
+
+    const handleBulkDelete = () => {
+        if (selectedProductIds.length === 0) return;
+        const count = selectedProductIds.length;
+        Promise.all(selectedProductIds.map((id) => deleteProductMutation(id)))
+            .then(() => {
+                toast.success(`Deleted ${count} products`);
+                setSelectedProductIds([]);
+            })
+            .catch(() => {
+                toast.error("Failed to delete some products");
+            });
     };
 
     // --- Sub-Components ---
@@ -449,6 +354,25 @@ export default function AdminDashboard() {
                                 ))}
                             </div>
 
+                            {lowStockProducts && lowStockProducts.length > 0 && (
+                                <Card className="border-amber-200 bg-amber-50/50">
+                                    <CardHeader className="flex flex-row items-center gap-2 pb-2">
+                                        <AlertCircle className="h-5 w-5 text-amber-500" />
+                                        <CardTitle className="text-sm font-medium text-amber-800">Low Stock Alerts</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="space-y-2">
+                                            {lowStockProducts!.slice(0, 5).map((p: Product) => (
+                                                <div key={p.id} className="flex items-center justify-between text-sm">
+                                                    <span className="text-amber-700 font-medium truncate">{p.name}</span>
+                                                    <span className="text-amber-600 font-bold ml-2">{p.stock} left</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
+
                             <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
                                 {/* Recent Activity */}
                                 <Card className="xl:col-span-2">
@@ -518,15 +442,7 @@ export default function AdminDashboard() {
                                                 {editingUser ? "Update user details below." : "Fill in the details below to create a new user."}
                                             </DialogDescription>
                                         </DialogHeader>
-                                        <UserForm setOpen={setIsUserModalOpen} onSuccess={() => {
-                                            // Trigger re-fetch
-                                            setPage(1); // Reset to page 1 or keep current? kept simple
-                                            // We need to trigger the useEffect, toggling a refresh trigger or just relying on state updates if we extracted fetch logic
-                                            // For now, we can force a refresh by toggling activeTab or better, extract fetchUsers to a function we can call
-                                            // Ideally we should extract fetchUsers. I'll hack it for now by updating a timestamp or similar, or just defining fetchUsers outside useEffect.
-                                            // Actually, I can just call a refresh function.
-                                            refreshUsers();
-                                        }} user={editingUser} />
+                                        <UserForm setOpen={setIsUserModalOpen} user={editingUser} />
                                     </DialogContent>
                                 </Dialog>
 
@@ -546,8 +462,8 @@ export default function AdminDashboard() {
                                             <Button variant="outline" onClick={() => setIsUserDeleteDialogOpen(false)}>
                                                 Cancel
                                             </Button>
-                                            <Button variant="destructive" onClick={handleDeleteUser} disabled={isLoading}>
-                                                {isLoading ? "Deleting..." : "Delete User"}
+                                            <Button variant="destructive" onClick={handleDeleteUser} disabled={usersLoading}>
+                                                {usersLoading ? "Deleting..." : "Delete User"}
                                             </Button>
                                         </DialogFooter>
                                     </DialogContent>
@@ -561,22 +477,16 @@ export default function AdminDashboard() {
                                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                         <Input
                                             placeholder="Search users..."
-                                            value={searchQuery}
-                                            onChange={(e) => {
-                                                setSearchQuery(e.target.value);
-                                                setPage(1); // Reset to first page on search
-                                            }}
+                                            value={userParams?.search || ""}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
                                             className="pl-8"
                                         />
                                     </div>
 
                                     {/* Role Filter */}
                                     <select
-                                        value={roleFilter}
-                                        onChange={(e) => {
-                                            setRoleFilter(e.target.value);
-                                            setPage(1);
-                                        }}
+                                        value={userParams?.role || ""}
+                                        onChange={(e) => setRoleFilter(e.target.value)}
                                         className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
                                         <option value="">All Roles</option>
@@ -586,7 +496,7 @@ export default function AdminDashboard() {
 
                                     {/* Sort By */}
                                     <select
-                                        value={sortBy}
+                                        value={userParams?.sortBy || "createdAt"}
                                         onChange={(e) => setSortBy(e.target.value as 'name' | 'email' | 'createdAt' | 'role')}
                                         className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
                                     >
@@ -600,10 +510,10 @@ export default function AdminDashboard() {
                                     <Button
                                         variant="outline"
                                         size="icon"
-                                        onClick={() => setSortOrder(order => order === 'asc' ? 'desc' : 'asc')}
-                                        title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                                        onClick={() => setSortOrder(userParams?.sortOrder === 'asc' ? 'desc' : 'asc')}
+                                        title={userParams?.sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                                     >
-                                        {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                                        {userParams?.sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                                     </Button>
                                 </div>
 
@@ -621,7 +531,7 @@ export default function AdminDashboard() {
                                                 </tr>
                                             </thead>
                                             <tbody className="[&_tr:last-child]:border-0">
-                                                {isLoading ? (
+                                                {usersLoading ? (
                                                     <tr>
                                                         <td colSpan={6} className="p-8 text-center text-muted-foreground">
                                                             Loading users...
@@ -682,243 +592,115 @@ export default function AdminDashboard() {
                                 </div>
 
                                 {/* Pagination Controls */}
-                                <div className="flex items-center justify-between px-2 py-4">
-                                    <div className="text-sm text-muted-foreground">
-                                        Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalUsers)} of {totalUsers} users
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setPage(p => Math.max(1, p - 1))}
-                                            disabled={page === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4 mr-1" />
-                                            Previous
-                                        </Button>
-                                        <div className="text-sm font-medium">
-                                            Page {page} of {totalPages}
+                                {userPagination && (
+                                    <div className="flex items-center justify-between px-2 py-4">
+                                        <div className="text-sm text-muted-foreground">
+                                            Showing {((userPagination.page - 1) * userPagination.limit) + 1} to {Math.min(userPagination.page * userPagination.limit, userPagination.total)} of {userPagination.total} users
                                         </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                            disabled={page === totalPages}
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                        </Button>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setUserParams({ page: userPagination.page - 1 })}
+                                                disabled={userPagination.page === 1}
+                                            >
+                                                <ChevronLeft className="h-4 w-4 mr-1" />
+                                                Previous
+                                            </Button>
+                                            <div className="text-sm font-medium">
+                                                Page {userPagination.page} of {userPagination.totalPages}
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setUserParams({ page: userPagination.page + 1 })}
+                                                disabled={userPagination.page === userPagination.totalPages}
+                                            >
+                                                Next
+                                                <ChevronRight className="h-4 w-4 ml-1" />
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
+                                )}
                             </CardContent>
                         </Card>
                     )}
 
                     {activeTab === "products" && (
-                        <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <CardTitle>Products Management</CardTitle>
-                                <Dialog open={isProductModalOpen} onOpenChange={(open) => {
-                                    setIsProductModalOpen(open);
-                                    if (!open) setEditingProduct(null);
-                                }}>
-                                    <DialogTrigger asChild>
-                                        <Button onClick={() => setEditingProduct(null)}>
-                                            <Package className="mr-2 h-4 w-4" />
-                                            Add Product
+                        <>
+                            <ProductTable
+                                products={products}
+                                pagination={productPagination}
+                                params={productParams}
+                                isLoading={productsLoading}
+                                isFetching={false}
+                                onParamsChange={(newParams) => setProductParams(newParams)}
+                                onEdit={(product) => {
+                                    setEditingProduct(product);
+                                    setIsProductModalOpen(true);
+                                }}
+                                onDelete={confirmDeleteProduct}
+                                onClone={(product) => {
+                                    setEditingProduct({
+                                        ...product,
+                                        id: "",
+                                        createdAt: new Date(),
+                                        name: `${product.name} (Copy)`,
+                                        slug: `${product.slug}-copy`,
+                                    });
+                                    setIsProductModalOpen(true);
+                                }}
+                                onAddClick={() => {
+                                    setEditingProduct(null);
+                                    setIsProductModalOpen(true);
+                                }}
+                                onExport={handleExport}
+                                onImport={() => setIsCSVImportOpen(true)}
+                                onBulkDelete={handleBulkDelete}
+                                selectedIds={selectedProductIds}
+                                onSelectionChange={setSelectedProductIds}
+                            />
+
+                            {/* Product Form Modal */}
+                            <Dialog open={isProductModalOpen} onOpenChange={(open) => {
+                                setIsProductModalOpen(open);
+                                if (!open) setEditingProduct(null);
+                            }}>
+                                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                                    <ProductForm setOpen={setIsProductModalOpen} product={editingProduct} />
+                                </DialogContent>
+                            </Dialog>
+
+                            {/* Delete Confirmation Dialog */}
+                            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                                <DialogContent className="sm:max-w-[425px]">
+                                    <DialogHeader>
+                                        <DialogTitle className="flex items-center gap-2 text-red-600">
+                                            <AlertTriangle className="h-5 w-5" />
+                                            Confirm Deletion
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Are you sure you want to delete this product? This action cannot be undone and will permanently remove the product from the catalog.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <DialogFooter className="gap-2 sm:gap-0">
+                                        <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                                            Cancel
                                         </Button>
-                                    </DialogTrigger>
-                                    <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                                        <DialogHeader>
-                                            <DialogTitle>{editingProduct ? "Edit Product" : "Add New Product"}</DialogTitle>
-                                            <DialogDescription>
-                                                {editingProduct ? "Update product details below." : "Fill in the details below to create a new product."}
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <ProductForm setOpen={setIsProductModalOpen} onSuccess={refreshProducts} product={editingProduct} />
-                                    </DialogContent>
-                                </Dialog>
-
-                                {/* Delete Confirmation Dialog */}
-                                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-                                    <DialogContent className="sm:max-w-[425px]">
-                                        <DialogHeader>
-                                            <DialogTitle className="flex items-center gap-2 text-red-600">
-                                                <AlertTriangle className="h-5 w-5" />
-                                                Confirm Deletion
-                                            </DialogTitle>
-                                            <DialogDescription>
-                                                Are you sure you want to delete this product? This action cannot be undone and will permanently remove the product from the catalog.
-                                            </DialogDescription>
-                                        </DialogHeader>
-                                        <DialogFooter className="gap-2 sm:gap-0">
-                                            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
-                                                Cancel
-                                            </Button>
-                                            <Button variant="destructive" onClick={handleDeleteProduct} disabled={isLoading}>
-                                                {isLoading ? "Deleting..." : "Delete Product"}
-                                            </Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                            </CardHeader>
-                            <CardContent>
-                                {/* Filter Controls */}
-                                <div className="flex flex-wrap gap-4 mb-4">
-                                    {/* Search */}
-                                    <div className="relative flex-1 min-w-[200px]">
-                                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            placeholder="Search products..."
-                                            value={productSearch}
-                                            onChange={(e) => {
-                                                setProductSearch(e.target.value);
-                                                setProductPage(1);
-                                            }}
-                                            className="pl-8"
-                                        />
-                                    </div>
-
-                                    {/* Category Filter */}
-                                    <select
-                                        value={categoryFilter}
-                                        onChange={(e) => {
-                                            setCategoryFilter(e.target.value);
-                                            setProductPage(1);
-                                        }}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
-                                    >
-                                        <option value="">All Categories</option>
-                                        {categories.map((category) => (
-                                            <option key={category} value={category}>
-                                                {category}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {/* Sort By */}
-                                    <select
-                                        value={productSortBy}
-                                        onChange={(e) => setProductSortBy(e.target.value as 'name' | 'price' | 'rating' | 'createdAt')}
-                                        className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer"
-                                    >
-                                        <option value="createdAt">Sort by: Created Date</option>
-                                        <option value="name">Sort by: Name</option>
-                                        <option value="price">Sort by: Price</option>
-                                        <option value="rating">Sort by: Rating</option>
-                                    </select>
-
-                                    {/* Sort Order Toggle */}
-                                    <Button
-                                        variant="outline"
-                                        size="icon"
-                                        onClick={() => setProductSortOrder(order => order === 'asc' ? 'desc' : 'asc')}
-                                        title={productSortOrder === 'asc' ? 'Ascending' : 'Descending'}
-                                    >
-                                        {productSortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                                    </Button>
-                                </div>
-
-                                <div className="rounded-md border">
-                                    <div className="relative w-full overflow-auto">
-                                        <table className="w-full caption-bottom text-sm">
-                                            <thead className="[&_tr]:border-b">
-                                                <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Name</th>
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Category</th>
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Price</th>
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Stock</th>
-                                                    <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Rating</th>
-                                                    <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="[&_tr:last-child]:border-0">
-                                                {isLoading ? (
-                                                    <tr>
-                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                                            Loading products...
-                                                        </td>
-                                                    </tr>
-                                                ) : products.length === 0 ? (
-                                                    <tr>
-                                                        <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                                                            No products found
-                                                        </td>
-                                                    </tr>
-                                                ) : (
-                                                    products.map((product) => (
-                                                        <tr key={product.id} className="border-b transition-colors hover:bg-muted/50">
-                                                            <td className="p-4 align-middle font-medium">{product.name}</td>
-                                                            <td className="p-4 align-middle">
-                                                                <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground">
-                                                                    {product.category}
-                                                                </span>
-                                                            </td>
-                                                            <td className="p-4 align-middle">${product.price}</td>
-                                                            <td className="p-4 align-middle">{product.stock}</td>
-                                                            <td className="p-4 align-middle">{product.rating}</td>
-                                                            <td className="p-4 align-middle text-right">
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger asChild>
-                                                                        <Button variant="ghost" className="h-8 w-8 p-0">
-                                                                            <span className="sr-only">Open menu</span>
-                                                                            <MoreVertical className="h-4 w-4" />
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent align="end">
-                                                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                                        <DropdownMenuItem onClick={() => {
-                                                                            setEditingProduct(product);
-                                                                            setIsProductModalOpen(true);
-                                                                        }}>
-                                                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuSeparator />
-                                                                        <DropdownMenuItem className="text-red-600" onClick={() => confirmDelete(product.id)}>
-                                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            </td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-
-                                {/* Pagination Controls */}
-                                <div className="flex items-center justify-between px-2 py-4">
-                                    <div className="text-sm text-muted-foreground">
-                                        Showing {((productPage - 1) * limit) + 1} to {Math.min(productPage * limit, productTotalCount)} of {productTotalCount} products
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setProductPage(p => Math.max(1, p - 1))}
-                                            disabled={productPage === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4 mr-1" />
-                                            Previous
+                                        <Button variant="destructive" onClick={handleDeleteProduct}>
+                                            Delete Product
                                         </Button>
-                                        <div className="text-sm font-medium">
-                                            Page {productPage} of {productTotalPages}
-                                        </div>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setProductPage(p => Math.min(productTotalPages, p + 1))}
-                                            disabled={productPage === productTotalPages}
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                        </Button>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+
+                            {/* CSV Import Modal */}
+                            <CSVImportModal
+                                open={isCSVImportOpen}
+                                onOpenChange={setIsCSVImportOpen}
+                                onSuccess={() => setProductParams({ page: 1 })}
+                            />
+                        </>
                     )}
 
                 </main>
