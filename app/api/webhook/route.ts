@@ -141,20 +141,22 @@ const GREETING_KEYWORDS = ['hi', 'hello', 'សួស្តី', 'ជំរាប
 async function handleText(psid: string, text: string) {
   const t = text.toLowerCase().trim()
 
-  // Greeting → welcome message + menu
+  // Only respond to greetings
   if (GREETING_KEYWORDS.some(kw => t.includes(kw))) {
     await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ DORMAX 🙏\nDORMAX — Simple Style For Man 🇰🇭`)
-    return sendMainMenu(psid)
+    await sendMainMenu(psid)
+    // Sticky quick reply to re-show menu
+    await sendRequest({
+      recipient: { id: psid },
+      message: {
+        text: '👀 មើលផលិតផលទាំងអស់',
+        quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
+      },
+    })
+    return
   }
 
-  // Fallback → hint + See All Products quick reply
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'សួស្តី! សូមវាយ "hi" ដើម្បីមើលផលិតផល 🛍️',
-      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
-    },
-  })
+  // Silently ignore everything else
 }
 
 // ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
@@ -201,22 +203,16 @@ async function handleProductSelection(psid: string, productId: string) {
 
   await sendTyping(psid)
 
-  // Single product card with image, name, price
+  // Color variant carousel (no buttons)
+  const elements = product.colors.slice(0, 10).map(color => ({
+    title: `${product.nameKh || product.name} — ${color.name}`,
+    subtitle: `💰 $${product.price.toFixed(2)}`,
+    image_url: color.imageUrl,
+  }))
+
   await sendRequest({
     recipient: { id: psid },
-    message: {
-      attachment: {
-        type: 'template',
-        payload: {
-          template_type: 'generic',
-          elements: [{
-            title: product.nameKh || product.name,
-            subtitle: `💰 $${product.price.toFixed(2)}`,
-            image_url: product.image,
-          }],
-        },
-      },
-    },
+    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
   })
 
   // Colors as quick replies
