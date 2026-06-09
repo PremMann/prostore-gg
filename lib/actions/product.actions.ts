@@ -3,6 +3,7 @@ import { prisma } from "@/db/prisma";
 import { convertToPlainObject, formatError } from "../utils";
 import { LATEST_PRODUCTS_LIMIT } from "../constants";
 import { insertProductSchema } from "../validators";
+import type { Product } from "@/types";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
@@ -14,7 +15,7 @@ export async function getLatestProducts() {
         },
         take: LATEST_PRODUCTS_LIMIT,
     });
-    return convertToPlainObject(data);
+    return convertToPlainObject(data) as unknown as Product[];
 }
 
 // Get featured products (highest rated)
@@ -84,7 +85,7 @@ export async function getProductBySlug(slug: string) {
         banner: product.banner,
         createdAt: product.createdAt,
         sizes: product.sizes,
-        colors: product.colors,
+        colors: product.colors as { name: string; imageUrl: string }[],
     };
 }
 
@@ -176,7 +177,7 @@ export async function getAllProducts(params: GetProductsParams = {}) {
         return {
             success: true,
             data: {
-                products: convertToPlainObject(products),
+                products: convertToPlainObject(products) as unknown as Product[],
                 pagination,
             },
         };

@@ -12,7 +12,7 @@ export default function AddToCart({ product }: { product: Product }) {
     const { addItem } = useCart();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || '');
-    const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0] || '');
+    const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0]?.name || '');
 
     const handleAddToCart = async () => {
         if (product.sizes.length > 0 && !selectedSize) {
@@ -76,18 +76,18 @@ export default function AddToCart({ product }: { product: Product }) {
                     <div className="flex items-center gap-4">
                         <span className="font-semibold w-14">Color:</span>
                         <div className="flex flex-wrap gap-2">
-                            {product.colors.map((color) => (
-                                <button
-                                    key={color}
-                                    type="button"
-                                    onClick={() => setSelectedColor(color)}
-                                    className={cn(
-                                        "px-4 py-2 text-sm border rounded-md transition-all hover:border-black dark:hover:border-white",
-                                        selectedColor === color ? "border-black dark:border-white bg-secondary/50 font-medium" : "border-input"
-                                    )}
-                                >
-                                    {color}
-                                </button>
+                                {(product.colors as { name: string; imageUrl: string }[]).map((color) => (
+                                    <button
+                                        key={color.name}
+                                        type="button"
+                                        onClick={() => setSelectedColor(color.name)}
+                                        className={cn(
+                                            "px-4 py-2 text-sm border rounded-md transition-all hover:border-black dark:hover:border-white",
+                                            selectedColor === color.name ? "border-black dark:border-white bg-secondary/50 font-medium" : "border-input"
+                                        )}
+                                    >
+                                        {color.name}
+                                    </button>
                             ))}
                         </div>
                     </div>

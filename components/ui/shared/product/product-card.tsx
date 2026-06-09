@@ -23,7 +23,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       price: product.price.toString(),
       qty: 1,
       size: size,
-      color: product.colors?.[0] || undefined,
+      color: (product.colors as { name: string }[])?.[0]?.name || undefined,
     };
 
     addItem(cartItem);
