@@ -1,4 +1,5 @@
 import AdminDashboard from "@/components/admin/admin-dashboard";
+import { QueryProvider } from "@/providers/QueryProvider";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function AdminDashboardPage() {
-    return <AdminDashboard />;
+    return (
+        <QueryProvider>
+            <AdminDashboard />
+        </QueryProvider>
+    );
 }
