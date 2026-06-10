@@ -43,7 +43,7 @@ export function ProductTableToolbar({
   };
 
   const handleCategoryChange = (value: string) => {
-    onParamsChange({ category: value || undefined, page: 1 });
+    onParamsChange({ category: value === "all" ? undefined : value, page: 1 });
   };
 
   const handleSortChange = (field: GetProductsParams["sortBy"]) => {
@@ -67,12 +67,12 @@ export function ProductTableToolbar({
           />
         </form>
 
-        <Select value={params.category || ""} onValueChange={handleCategoryChange}>
+        <Select value={params.category || "all"} onValueChange={handleCategoryChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="All Categories" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Categories</SelectItem>
+            <SelectItem value="all">All Categories</SelectItem>
             {PRODUCT_CATEGORIES.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.name}
