@@ -1,8 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof createPrismaClient>;
-};
+// Standard global singleton pattern for Prisma in serverless environments
+declare global {
+  // eslint-disable-next-line no-var
+  var prisma: ReturnType<typeof createPrismaClient> | undefined;
+}
 
 function createPrismaClient() {
   return new PrismaClient().$extends({
@@ -23,9 +25,9 @@ function createPrismaClient() {
   });
 }
 
-export const prisma = globalForPrisma.prisma || createPrismaClient();
+const client = createPrismaClient();
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
+export const prisma: ReturnType<typeof createPrismaClient> = global.prisma ?? client;
+
+if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
 
