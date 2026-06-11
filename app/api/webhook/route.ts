@@ -31,6 +31,8 @@ type UserState = {
   psid: string
   selectedProductId?: string
   selectedProductName?: string
+  selectedAt?: number
+  lastFallbackAt?: number
 }
 
 const CATEGORY_MAP: Record<string, true> = {
@@ -42,6 +44,8 @@ const CATEGORY_MAP: Record<string, true> = {
 let cachedProducts: BotProduct[] | null = null
 let cacheTime = 0
 const CACHE_TTL = 60_000
+const SELECTED_PRODUCT_TTL = 30 * 60_000
+const FALLBACK_REPLY_TTL = 5 * 60_000
 
 async function getProducts(): Promise<BotProduct[]> {
   const now = Date.now()
@@ -88,6 +92,21 @@ function updateUserState(psid: string, partialState: Partial<UserState>) {
 
 function clearUserState(psid: string) {
   userStates.delete(psid)
+}
+
+function hasActiveProductSelection(psid: string, state: UserState): state is UserState & {
+  selectedProductId: string
+  selectedProductName: string
+  selectedAt: number
+} {
+  if (!state.selectedProductId || !state.selectedProductName || !state.selectedAt) return false
+
+  if (Date.now() - state.selectedAt > SELECTED_PRODUCT_TTL) {
+    clearUserState(psid)
+    return false
+  }
+
+  return true
 }
 
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
@@ -165,13 +184,33 @@ export async function POST(req: NextRequest) {
 
 const GREETING_KEYWORDS = ['hi', 'hello', 'សួស្តី', 'ជំរាបសួរ']
 const PRODUCT_TRIGGER_KEYWORDS = ['shop', 'product', 'products', 'buy', 'order', 'មើល', 'ទិញ', 'អាវ', 'ខោ']
+const HUMAN_SUPPORT_KEYWORDS = [
+  'admin',
+  'staff',
+  'support',
+  'contact',
+  'help',
+  'អេដមីន',
+  'អ្នកលក់',
+  'បុគ្គលិក',
+  'ជំនួយ',
+  'ជួយ',
+  'ទាក់ទង',
+]
 
 async function handleText(psid: string, text: string) {
   const t = text.toLowerCase().trim()
   const state = getUserState(psid)
 
+  if (hasKeyword(t, HUMAN_SUPPORT_KEYWORDS)) {
+    clearUserState(psid)
+    await sendTelegramSupportRequest(psid, text)
+    await sendText(psid, '📞 បុគ្គលិកនឹងឆ្លើយតបឆាប់ៗនេះ។')
+    return
+  }
+
   // After a product is selected, the next customer text becomes a lead.
-  if (state.selectedProductId && state.selectedProductName) {
+  if (hasActiveProductSelection(psid, state)) {
     await sendTelegramLead(psid, state.selectedProductName, text)
     clearUserState(psid)
     await sendText(psid, '✅ អរគុណ! ក្រុមការងារនឹងទាក់ទងអ្នកឆាប់ៗនេះ។')
@@ -179,7 +218,8 @@ async function handleText(psid: string, text: string) {
   }
 
   // Product carousel triggers.
-  if (GREETING_KEYWORDS.some(kw => t.includes(kw))) {
+  if (hasKeyword(t, GREETING_KEYWORDS)) {
+    clearUserState(psid)
     await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏\n — Simple Style For Man 🇰🇭`)
     await sendMainMenu(psid)
     // Sticky quick reply to re-show menu
@@ -193,13 +233,13 @@ async function handleText(psid: string, text: string) {
     return
   }
 
-  if (PRODUCT_TRIGGER_KEYWORDS.some(kw => t.includes(kw))) {
+  if (hasKeyword(t, PRODUCT_TRIGGER_KEYWORDS)) {
+    clearUserState(psid)
     await sendMainMenu(psid)
     return
   }
 
-  await sendText(psid, 'សូមចុច “មើលផលិតផលទាំងអស់” ដើម្បីជ្រើសរើសផលិតផល។')
-  await sendMainMenuShortcut(psid)
+  await sendFallbackReply(psid, state)
 }
 
 // ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
@@ -239,6 +279,7 @@ async function handleProductSelection(psid: string, productId: string) {
   updateUserState(psid, {
     selectedProductId: product.id,
     selectedProductName: product.nameKh || product.name,
+    selectedAt: Date.now(),
   })
 
   await sendProductColorCarousel(psid, product)
@@ -352,12 +393,18 @@ async function sendText(psid: string, text: string) {
   await sendRequest({ recipient: { id: psid }, message: { text } })
 }
 
-async function sendMainMenuShortcut(psid: string) {
+async function sendFallbackReply(psid: string, state: UserState) {
+  if (state.lastFallbackAt && Date.now() - state.lastFallbackAt < FALLBACK_REPLY_TTL) {
+    return
+  }
+
+  updateUserState(psid, { lastFallbackAt: Date.now() })
+
   await sendRequest({
     recipient: { id: psid },
     message: {
-      text: '👀 មើលផលិតផលទាំងអស់',
-      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
+      text: 'ប្អូនទទួលបានសារបងហើយ។ បើចង់មើលផលិតផល សូមចុចប៊ូតុងខាងក្រោម។',
+      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផល', payload: 'MAIN_MENU' }],
     },
   })
 }
@@ -365,6 +412,10 @@ async function sendMainMenuShortcut(psid: string) {
 async function sendTyping(psid: string) {
   await sendRequest({ recipient: { id: psid }, sender_action: 'typing_on' })
   await new Promise(r => setTimeout(r, 500))
+}
+
+function hasKeyword(text: string, keywords: string[]) {
+  return keywords.some(kw => text.includes(kw))
 }
 
 async function sendRequest(body: Record<string, unknown>) {
