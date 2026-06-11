@@ -27,6 +27,12 @@ type BotProduct = {
   url: string
 }
 
+type UserState = {
+  psid: string
+  selectedProductId?: string
+  selectedProductName?: string
+}
+
 const CATEGORY_MAP: Record<string, true> = {
   shirts: true,
   pants: true,
@@ -61,6 +67,27 @@ async function getProducts(): Promise<BotProduct[]> {
     console.error('Failed to load products from DB:', err)
     return cachedProducts ?? []
   }
+}
+
+// ── USER STATE (in-memory, replaceable with Redis later) ──────
+
+const userStates = new Map<string, UserState>()
+
+function getUserState(psid: string): UserState {
+  const state = userStates.get(psid)
+  if (state) return state
+
+  const newState = { psid }
+  userStates.set(psid, newState)
+  return newState
+}
+
+function updateUserState(psid: string, partialState: Partial<UserState>) {
+  userStates.set(psid, { ...getUserState(psid), ...partialState })
+}
+
+function clearUserState(psid: string) {
+  userStates.delete(psid)
 }
 
 // ── WEBHOOK VERIFY (GET) ──────────────────────────────────────
@@ -137,13 +164,23 @@ export async function POST(req: NextRequest) {
 // ── HANDLE TEXT ───────────────────────────────────────────────
 
 const GREETING_KEYWORDS = ['hi', 'hello', 'សួស្តី', 'ជំរាបសួរ']
+const PRODUCT_TRIGGER_KEYWORDS = ['shop', 'product', 'products', 'buy', 'order', 'មើល', 'ទិញ', 'អាវ', 'ខោ']
 
 async function handleText(psid: string, text: string) {
   const t = text.toLowerCase().trim()
+  const state = getUserState(psid)
 
-  // Only respond to greetings
+  // After a product is selected, the next customer text becomes a lead.
+  if (state.selectedProductId && state.selectedProductName) {
+    await sendTelegramLead(psid, state.selectedProductName, text)
+    clearUserState(psid)
+    await sendText(psid, '✅ អរគុណ! ក្រុមការងារនឹងទាក់ទងអ្នកឆាប់ៗនេះ។')
+    return
+  }
+
+  // Product carousel triggers.
   if (GREETING_KEYWORDS.some(kw => t.includes(kw))) {
-    await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ DORMAX 🙏\nDORMAX — Simple Style For Man 🇰🇭`)
+    await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏\n — Simple Style For Man 🇰🇭`)
     await sendMainMenu(psid)
     // Sticky quick reply to re-show menu
     await sendRequest({
@@ -156,83 +193,62 @@ async function handleText(psid: string, text: string) {
     return
   }
 
-  // Silently ignore everything else
+  if (PRODUCT_TRIGGER_KEYWORDS.some(kw => t.includes(kw))) {
+    await sendMainMenu(psid)
+    return
+  }
+
+  await sendText(psid, 'សូមចុច “មើលផលិតផលទាំងអស់” ដើម្បីជ្រើសរើសផលិតផល។')
+  await sendMainMenuShortcut(psid)
 }
 
 // ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
 
 async function handlePostback(psid: string, payload: string) {
   if (payload === 'GET_STARTED') {
+    clearUserState(psid)
+    await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏\n — Simple Style For Man 🇰🇭`)
     return sendMainMenu(psid)
   }
 
   if (payload === 'MAIN_MENU') {
+    clearUserState(psid)
     return sendMainMenu(psid)
   }
 
-  // Show product colors
+  if (payload === 'CONTACT_STAFF') {
+    clearUserState(psid)
+    await sendTelegramSupportRequest(psid, 'Customer tapped contact staff')
+    return sendText(psid, '📞 បុគ្គលិកនឹងឆ្លើយតបឆាប់ៗនេះ។')
+  }
+
+  // Save product interest and wait for the user's next text message.
   if (payload.startsWith('SHOW_PRODUCT_')) {
     const productId = payload.replace('SHOW_PRODUCT_', '')
     return handleProductSelection(psid, productId)
   }
-
-  // Color selected → send Telegram alert + re-send color options
-  if (payload.startsWith('SELECT_COLOR_')) {
-    const rest = payload.replace('SELECT_COLOR_', '')
-    const underscoreIdx = rest.indexOf('_')
-    const productId = underscoreIdx === -1 ? rest : rest.slice(0, underscoreIdx)
-    const colorName = underscoreIdx === -1 ? '' : rest.slice(underscoreIdx + 1).replace(/_/g, ' ')
-
-    const products = await getProducts()
-    const product = products.find(p => p.id === productId)
-    if (product) {
-      await sendTelegramAlert(product.nameKh || product.name, colorName)
-    }
-
-    // Re-send the same product colors so user can tap another color
-    return handleProductSelection(psid, productId)
-  }
 }
 
-// ── SHOW PRODUCT + COLOR QUICK REPLIES ────────────────────────
+// ── PRODUCT SELECTION ─────────────────────────────────────────
 
 async function handleProductSelection(psid: string, productId: string) {
   const products = await getProducts()
   const product = products.find(p => p.id === productId)
   if (!product) return sendMainMenu(psid)
 
-  await sendTyping(psid)
-
-  // Color variant carousel (no buttons)
-  const elements = product.colors.slice(0, 10).map(color => ({
-    title: `${product.nameKh || product.name} — ${color.name}`,
-    subtitle: `💰 $${product.price.toFixed(2)}`,
-    image_url: color.imageUrl,
-  }))
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
-  })
-
-  // Colors as quick replies
-  const quickReplies = product.colors.map(color => ({
-    content_type: 'text' as const,
-    title: `🎨 ${color.name}`,
-    payload: `SELECT_COLOR_${product.id}_${color.name.replace(/\s+/g, '_')}`,
-  }))
-
-  quickReplies.push({
-    content_type: 'text',
-    title: '🔙 ត្រឡប់ក្រោយ',
-    payload: 'MAIN_MENU',
+  updateUserState(psid, {
+    selectedProductId: product.id,
+    selectedProductName: product.nameKh || product.name,
   })
 
   await sendRequest({
     recipient: { id: psid },
     message: {
-      text: 'ជ្រើសរើសពណ៌:',
-      quick_replies: quickReplies,
+      text: `អ្នកបានជ្រើសរើស ${product.nameKh || product.name}។\n\nសូមផ្ញើសារបន្ថែម បើអ្នកចាប់អារម្មណ៍ ឬមានសំណួរ។`,
+      quick_replies: [
+        { content_type: 'text', title: '📞 ទាក់ទងបុគ្គលិក', payload: 'CONTACT_STAFF' },
+        { content_type: 'text', title: '👀 មើលផលិតផលផ្សេង', payload: 'MAIN_MENU' },
+      ],
     },
   })
 }
@@ -251,7 +267,7 @@ async function sendMainMenu(psid: string) {
     title: p.nameKh || p.name,
     subtitle: `💰 $${p.price.toFixed(2)}`,
     image_url: p.image,
-    buttons: [{ type: 'postback', title: 'មើលពណ៌', payload: `SHOW_PRODUCT_${p.id}` }],
+    buttons: [{ type: 'postback', title: 'ជ្រើសរើស', payload: `SHOW_PRODUCT_${p.id}` }],
   }))
 
   await sendRequest({
@@ -262,9 +278,33 @@ async function sendMainMenu(psid: string) {
 
 // ── TELEGRAM ALERT ────────────────────────────────────────────
 
-async function sendTelegramAlert(productName: string, colorName: string) {
+async function sendTelegramLead(psid: string, productName: string, customerMessage: string) {
+  const text = [
+    '🔥 New Messenger Lead',
+    '',
+    `Product: ${productName}`,
+    `PSID: ${psid}`,
+    `Message: ${customerMessage}`,
+    `Time: ${new Date().toISOString()}`,
+  ].join('\n')
+
+  await sendTelegramMessage(text)
+}
+
+async function sendTelegramSupportRequest(psid: string, customerMessage: string) {
+  const text = [
+    '📞 Customer Requested Human Support',
+    '',
+    `PSID: ${psid}`,
+    `Message: ${customerMessage}`,
+    `Time: ${new Date().toISOString()}`,
+  ].join('\n')
+
+  await sendTelegramMessage(text)
+}
+
+async function sendTelegramMessage(text: string) {
   try {
-    const text = `🔔 Customer interested in\n📍 Product: ${productName}\n🎨 Color: ${colorName}`
     const res = await fetch(
       `https://api.telegram.org/bot${requireEnv('TELEGRAM_BOT_TOKEN')}/sendMessage`,
       {
@@ -276,7 +316,7 @@ async function sendTelegramAlert(productName: string, colorName: string) {
     if (!res.ok) {
       console.error('Telegram error:', JSON.stringify(await res.json()))
     } else {
-      console.log('Telegram alert sent ✅')
+      console.log('Telegram message sent ✅')
     }
   } catch (err) {
     console.error('Telegram fetch failed:', err)
@@ -287,6 +327,16 @@ async function sendTelegramAlert(productName: string, colorName: string) {
 
 async function sendText(psid: string, text: string) {
   await sendRequest({ recipient: { id: psid }, message: { text } })
+}
+
+async function sendMainMenuShortcut(psid: string) {
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      text: '👀 មើលផលិតផលទាំងអស់',
+      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
+    },
+  })
 }
 
 async function sendTyping(psid: string) {
