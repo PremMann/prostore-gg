@@ -241,15 +241,38 @@ async function handleProductSelection(psid: string, productId: string) {
     selectedProductName: product.nameKh || product.name,
   })
 
+  await sendProductColorCarousel(psid, product)
+
   await sendRequest({
     recipient: { id: psid },
     message: {
-      text: `អ្នកបានជ្រើសរើស ${product.nameKh || product.name}។\n\nសូមផ្ញើសារបន្ថែម បើអ្នកចាប់អារម្មណ៍ ឬមានសំណួរ។`,
+      text: 'បើបងចាប់អារម្មណ៍ សូមផ្ញើសារមកបានបង។',
       quick_replies: [
         { content_type: 'text', title: '📞 ទាក់ទងបុគ្គលិក', payload: 'CONTACT_STAFF' },
         { content_type: 'text', title: '👀 មើលផលិតផលផ្សេង', payload: 'MAIN_MENU' },
       ],
     },
+  })
+}
+
+async function sendProductColorCarousel(psid: string, product: BotProduct) {
+  const colorElements = product.colors.slice(0, 10).map(color => ({
+    title: `${product.nameKh || product.name} - ${color.name}`,
+    subtitle: `💰 $${product.price.toFixed(2)}`,
+    image_url: color.imageUrl,
+  }))
+
+  const elements = colorElements.length > 0
+    ? colorElements
+    : [{
+      title: product.nameKh || product.name,
+      subtitle: `💰 $${product.price.toFixed(2)}`,
+      image_url: product.image,
+    }]
+
+  await sendRequest({
+    recipient: { id: psid },
+    message: { attachment: { type: 'template', payload: { template_type: 'generic', elements } } },
   })
 }
 
