@@ -32,7 +32,6 @@ type UserState = {
   selectedProductId?: string
   selectedProductName?: string
   selectedAt?: number
-  lastFallbackAt?: number
 }
 
 const CATEGORY_MAP: Record<string, true> = {
@@ -45,7 +44,6 @@ let cachedProducts: BotProduct[] | null = null
 let cacheTime = 0
 const CACHE_TTL = 60_000
 const SELECTED_PRODUCT_TTL = 30 * 60_000
-const FALLBACK_REPLY_TTL = 5 * 60_000
 
 async function getProducts(): Promise<BotProduct[]> {
   const now = Date.now()
@@ -239,7 +237,7 @@ async function handleText(psid: string, text: string) {
     return
   }
 
-  await sendFallbackReply(psid, state)
+  // Ignore unrelated text so the bot does not feel repetitive.
 }
 
 // ── HANDLE POSTBACK / QUICK REPLY PAYLOADS ───────────────────
@@ -283,17 +281,6 @@ async function handleProductSelection(psid: string, productId: string) {
   })
 
   await sendProductColorCarousel(psid, product)
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'បើបងចាប់អារម្មណ៍ សូមផ្ញើសារមកបានបង។',
-      quick_replies: [
-        { content_type: 'text', title: '📞 ទាក់ទងបុគ្គលិក', payload: 'CONTACT_STAFF' },
-        { content_type: 'text', title: '👀 មើលផលិតផលផ្សេង', payload: 'MAIN_MENU' },
-      ],
-    },
-  })
 }
 
 async function sendProductColorCarousel(psid: string, product: BotProduct) {
@@ -391,22 +378,6 @@ async function sendTelegramMessage(text: string) {
 
 async function sendText(psid: string, text: string) {
   await sendRequest({ recipient: { id: psid }, message: { text } })
-}
-
-async function sendFallbackReply(psid: string, state: UserState) {
-  if (state.lastFallbackAt && Date.now() - state.lastFallbackAt < FALLBACK_REPLY_TTL) {
-    return
-  }
-
-  updateUserState(psid, { lastFallbackAt: Date.now() })
-
-  await sendRequest({
-    recipient: { id: psid },
-    message: {
-      text: 'ប្អូនទទួលបានសារបងហើយ។ បើចង់មើលផលិតផល សូមចុចប៊ូតុងខាងក្រោម។',
-      quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផល', payload: 'MAIN_MENU' }],
-    },
-  })
 }
 
 async function sendTyping(psid: string) {
