@@ -185,8 +185,12 @@ export function useProductForm({ product, onSuccess, setOpen }: UseProductFormPr
     const payload = {
       ...data,
       brand: data.brand || "PROMELODY",
-      slug: data.slug || data.name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-"),
-      productCode: data.productCode || "",
+      slug: data.slug || (() => {
+        const base = data.name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-");
+        const suffix = Math.random().toString(36).slice(2, 7);
+        return `${base}-${suffix}`;
+      })(),
+      productCode: data.productCode || null,
       tags: data.tags || [],
       weight: data.weight || null,
       dimensions: data.dimensions || null,
