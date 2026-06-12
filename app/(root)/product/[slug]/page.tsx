@@ -20,7 +20,7 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
 
   return (
     <>
-      <section className="py-8 lg:py-12">
+      <section className="max-w-[1400px] mx-auto px-8 lg:px-16 py-12 lg:py-20">
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12'>
           {/* Left Column - Product Images (60% on desktop) */}
           <div className='lg:pr-8'>
@@ -30,21 +30,21 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
           {/* Right Column - Product Details (40% on desktop) */}
           <div className='space-y-6'>
             {/* Brand & Category */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 uppercase text-[10px] tracking-[0.2em] font-medium text-zinc-500">
               <span>{product.brand}</span>
               <span>•</span>
               <span>{product.category}</span>
             </div>
 
             {/* Product Name */}
-            <h1 className='text-3xl lg:text-4xl font-bold tracking-tight'>{product.name}</h1>
+            <h1 className='text-3xl lg:text-4xl font-light uppercase tracking-tight'>{product.name}</h1>
             {product.nameKh && (
               <p className="text-lg text-muted-foreground mt-1">{product.nameKh}</p>
             )}
 
             {/* Product Code */}
             {product.productCode && (
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[10px] tracking-[0.1em] text-zinc-400 uppercase">
                 SKU: <span className="font-mono">{product.productCode}</span>
               </div>
             )}
@@ -58,25 +58,16 @@ const ProductDetailsPage = async (props: { params: Promise<{ slug: string }> }) 
             </div>
 
             {/* Rating & Reviews */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <span className="text-xl font-semibold">{product.rating}</span>
-                <span className="text-yellow-500 text-xl">★</span>
-              </div>
-              <span className="text-sm text-muted-foreground">
-                ({product.numReviews} {product.numReviews === 1 ? 'review' : 'reviews'})
-              </span>
+            <div className="text-[10px] tracking-[0.2em] uppercase font-medium text-zinc-600 dark:text-zinc-400">
+              RATING: {Number(product.rating).toFixed(1)} / 5.0 ({product.numReviews} REVIEWS)
             </div>
 
             {/* Stock Status */}
-            <div className='flex items-center gap-3'>
-              <span className="text-sm font-medium text-muted-foreground">Status:</span>
-              {product.stock > 0 ? (
-                <Badge variant='outline' className="bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
-                  In Stock ({product.stock} available)
-                </Badge>
+            <div className='text-[10px] tracking-widest uppercase font-medium'>
+              STATUS: {product.stock > 0 ? (
+                <span className="text-zinc-900 dark:text-zinc-100">IN STOCK</span>
               ) : (
-                <Badge variant='destructive'>Out Of Stock</Badge>
+                <span className="text-zinc-500">OUT OF STOCK</span>
               )}
             </div>
 

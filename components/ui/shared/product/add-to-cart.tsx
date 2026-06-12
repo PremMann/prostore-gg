@@ -61,8 +61,8 @@ export default function AddToCart({ product }: { product: Product }) {
                                     type="button"
                                     onClick={() => setSelectedSize(size)}
                                     className={cn(
-                                        "px-4 py-2 text-sm border rounded-md transition-all hover:border-black dark:hover:border-white",
-                                        selectedSize === size ? "border-black dark:border-white bg-secondary/50 font-medium" : "border-input"
+                                        "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white",
+                                        selectedSize === size ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                     )}
                                 >
                                     {size}
@@ -82,8 +82,8 @@ export default function AddToCart({ product }: { product: Product }) {
                                         type="button"
                                         onClick={() => setSelectedColor(color.name)}
                                         className={cn(
-                                            "px-4 py-2 text-sm border rounded-md transition-all hover:border-black dark:hover:border-white",
-                                            selectedColor === color.name ? "border-black dark:border-white bg-secondary/50 font-medium" : "border-input"
+                                            "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white",
+                                            selectedColor === color.name ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                         )}
                                     >
                                         {color.name}
@@ -96,16 +96,16 @@ export default function AddToCart({ product }: { product: Product }) {
 
             <div className="product-add-action">
                 <Button
-                    className="w-full h-12 text-lg cursor-pointer"
+                    className="w-full h-12 rounded-none uppercase tracking-[0.25em] text-xs font-semibold cursor-pointer"
                     onClick={handleAddToCart}
                     disabled={isLoading || product.stock < 1}
                 >
                     {isLoading ? (
-                        <Loader className="w-5 h-5 animate-spin mr-2" />
+                        <Loader className="w-4 h-4 animate-spin mr-2" />
                     ) : (
-                        <Plus className="w-5 h-5 mr-2" />
+                        <Plus className="w-4 h-4 mr-2" />
                     )}
-                    {product.stock < 1 ? 'Out of Stock' : 'Add to Cart'}
+                    {product.stock < 1 ? 'OUT OF STOCK' : 'ADD TO BAG'}
                 </Button>
             </div>
         </div>

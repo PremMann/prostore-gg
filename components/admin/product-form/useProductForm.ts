@@ -30,7 +30,7 @@ export function useProductForm({ product, onSuccess, setOpen }: UseProductFormPr
       slug: product?.slug || "",
       productCode: product?.productCode || "",
       category: product?.category || "",
-      brand: product?.brand || "",
+      brand: product?.brand || "PROMELODY",
       price: product?.price || "",
       stock: product?.stock ?? 0,
       description: product?.description || "",
@@ -165,9 +165,40 @@ export function useProductForm({ product, onSuccess, setOpen }: UseProductFormPr
   };
 
   const onSubmit = form.handleSubmit(async (data: ProductFormData) => {
+    const generatedVariants: { size: string; color: string; stock: number; sku: string; priceAdjustment: number }[] = [];
+    if (data.sizes?.length && data.colors?.length) {
+      data.sizes.forEach((size) => {
+        data.colors.forEach((color) => {
+          generatedVariants.push({ size, color: color.name, stock: 0, sku: "", priceAdjustment: 0 });
+        });
+      });
+    } else if (data.sizes?.length) {
+      data.sizes.forEach((size) => {
+        generatedVariants.push({ size, color: "", stock: 0, sku: "", priceAdjustment: 0 });
+      });
+    } else if (data.colors?.length) {
+      data.colors.forEach((color) => {
+        generatedVariants.push({ size: "", color: color.name, stock: 0, sku: "", priceAdjustment: 0 });
+      });
+    }
+
+    const payload = {
+      ...data,
+      brand: data.brand || "PROMELODY",
+      slug: data.slug || data.name.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-"),
+      productCode: data.productCode || "",
+      tags: data.tags || [],
+      weight: data.weight || null,
+      dimensions: data.dimensions || null,
+      metaTitle: data.metaTitle || null,
+      metaDescription: data.metaDescription || null,
+      banner: data.banner || null,
+      variants: generatedVariants,
+    };
+
     const result = product?.id
-      ? await updateProduct({ ...data, id: product.id })
-      : await createProduct(data);
+      ? await updateProduct({ ...payload, id: product.id })
+      : await createProduct(payload);
 
     if (result.success) {
       toast.success(result.message);

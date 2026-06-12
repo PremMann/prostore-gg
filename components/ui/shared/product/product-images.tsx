@@ -24,7 +24,7 @@ const ProductImages = ({ images }: { images: string[] }) => {
 
   return (
     <div className='space-y-4'>
-      <div className='relative w-full aspect-square overflow-hidden rounded-lg border bg-muted'>
+      <div className='relative w-full aspect-square overflow-hidden rounded-none border border-zinc-200 dark:border-zinc-800 bg-muted'>
         <Image
           src={images[current]}
           alt='product image'
@@ -41,7 +41,7 @@ const ProductImages = ({ images }: { images: string[] }) => {
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll('left')}
           >
             <ChevronLeft className="h-4 w-4" />
@@ -58,8 +58,8 @@ const ProductImages = ({ images }: { images: string[] }) => {
                 key={image}
                 onClick={() => setCurrent(index)}
                 className={cn(
-                  'relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 border-2 rounded-md overflow-hidden cursor-pointer hover:border-primary transition-colors',
-                  current === index ? 'border-primary' : 'border-border'
+                  'relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 border rounded-none overflow-hidden cursor-pointer hover:border-black dark:hover:border-white transition-colors',
+                  current === index ? 'border-black dark:border-white' : 'border-zinc-200 dark:border-zinc-800'
                 )}
               >
                 <Image
@@ -77,7 +77,7 @@ const ProductImages = ({ images }: { images: string[] }) => {
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-none opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll('right')}
           >
             <ChevronRight className="h-4 w-4" />
