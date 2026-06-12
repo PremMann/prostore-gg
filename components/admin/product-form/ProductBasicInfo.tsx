@@ -48,60 +48,27 @@ export function ProductBasicInfo({ form, onSlugGenerate }: ProductBasicInfoProps
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="slug">Slug</Label>
-          <Input
-            id="slug"
-            {...register("slug")}
-            placeholder="product-slug"
-            className="bg-muted"
-          />
-          {errors.slug && <p className="text-sm text-red-500">{String(errors.slug.message)}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="productCode">Product Code (SKU)</Label>
-          <Input
-            id="productCode"
-            {...register("productCode")}
-            placeholder="e.g. JEANS-001"
-          />
-          {errors.productCode && <p className="text-sm text-red-500">{String(errors.productCode.message)}</p>}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="category">Category</Label>
-          <Select
-            value={watch("category")}
-            onValueChange={(value) => {
-              setValue("category", value, { shouldValidate: true });
-              setValue("sizes", [], { shouldValidate: true });
-            }}
-          >
-            <SelectTrigger id="category">
-              <SelectValue placeholder="Select a category" />
-            </SelectTrigger>
-            <SelectContent>
-              {PRODUCT_CATEGORIES.map((category) => (
-                <SelectItem key={category.value} value={category.value}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {errors.category && <p className="text-sm text-red-500">{String(errors.category.message)}</p>}
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="brand">Brand</Label>
-          <Input
-            id="brand"
-            {...register("brand")}
-            placeholder="Brand"
-          />
-          {errors.brand && <p className="text-sm text-red-500">{String(errors.brand.message)}</p>}
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="category">Category</Label>
+        <Select
+          value={watch("category")}
+          onValueChange={(value) => {
+            setValue("category", value, { shouldValidate: true });
+            setValue("sizes", [], { shouldValidate: true });
+          }}
+        >
+          <SelectTrigger id="category">
+            <SelectValue placeholder="Select a category" />
+          </SelectTrigger>
+          <SelectContent>
+            {PRODUCT_CATEGORIES.map((category) => (
+              <SelectItem key={category.value} value={category.value}>
+                {category.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {errors.category && <p className="text-sm text-red-500">{String(errors.category.message)}</p>}
       </div>
 
       <div className="space-y-2">

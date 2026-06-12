@@ -109,53 +109,6 @@ export function ProductMedia({
           </div>
         )}
       </div>
-
-      <div className="space-y-2">
-        <Label>Banner Image (Optional)</Label>
-        <div className="flex items-center gap-2">
-          <Input
-            id="banner"
-            type="file"
-            accept="image/*"
-            onChange={onBannerUpload}
-            disabled={uploadingImages}
-            className="hidden"
-          />
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => document.getElementById("banner")?.click()}
-            disabled={uploadingImages}
-          >
-            <Upload className="mr-2 h-4 w-4" />
-            {uploadingImages ? "Uploading..." : "Upload Banner"}
-          </Button>
-          {banner && (
-            <span className="text-sm text-muted-foreground truncate flex-1">
-              Banner uploaded
-            </span>
-          )}
-        </div>
-        {errors.banner && <p className="text-sm text-red-500">{String(errors.banner.message)}</p>}
-
-        {banner && (
-          <div className="relative mt-2 w-full h-32 group">
-            <Image
-              src={banner}
-              alt="Banner"
-              fill
-              className="object-cover rounded border"
-            />
-            <button
-              type="button"
-              onClick={onRemoveBanner}
-              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
