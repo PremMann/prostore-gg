@@ -4,6 +4,7 @@ ALTER TABLE "Product" ADD COLUMN "dimensions" JSONB;
 ALTER TABLE "Product" ADD COLUMN "tags" TEXT[] DEFAULT '{}';
 ALTER TABLE "Product" ADD COLUMN "metaTitle" TEXT;
 ALTER TABLE "Product" ADD COLUMN "metaDescription" TEXT;
+ALTER TABLE "Product" ADD COLUMN "variants" JSON NOT NULL DEFAULT '[]';
 
 -- CreateTable: InventoryTransaction
 CREATE TABLE "InventoryTransaction" (
@@ -18,8 +19,8 @@ CREATE TABLE "InventoryTransaction" (
     CONSTRAINT "InventoryTransaction_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex: InventoryTransaction_productId_idx
+-- CreateIndex
 CREATE INDEX "InventoryTransaction_productId_idx" ON "InventoryTransaction"("productId");
 
--- AddForeignKey: InventoryTransaction_productId_fkey
+-- AddForeignKey
 ALTER TABLE "InventoryTransaction" ADD CONSTRAINT "InventoryTransaction_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
