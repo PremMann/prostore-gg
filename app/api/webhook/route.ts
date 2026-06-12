@@ -220,14 +220,6 @@ async function handleText(psid: string, text: string) {
     clearUserState(psid)
     await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏\n — Simple Style For Man 🇰🇭`)
     await sendMainMenu(psid)
-    // Sticky quick reply to re-show menu
-    await sendRequest({
-      recipient: { id: psid },
-      message: {
-        text: '👀 មើលផលិតផលទាំងអស់',
-        quick_replies: [{ content_type: 'text', title: '👀 មើលផលិតផលទាំងអស់', payload: 'MAIN_MENU' }],
-      },
-    })
     return
   }
 
