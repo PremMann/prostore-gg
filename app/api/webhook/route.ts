@@ -209,7 +209,7 @@ async function handleText(psid: string, text: string) {
 
   // After a product is selected, the next customer text becomes a lead.
   if (hasActiveProductSelection(psid, state)) {
-    await sendTelegramLead(psid, state.selectedProductName, text)
+    await sendTelegramLead(psid, state.selectedProductId, state.selectedProductName, text)
     clearUserState(psid)
     await sendText(psid, '✅ អរគុណ! ក្រុមការងារនឹងទាក់ទងអ្នកឆាប់ៗនេះ។')
     return
@@ -321,7 +321,20 @@ async function sendMainMenu(psid: string) {
 
 // ── TELEGRAM ALERT ────────────────────────────────────────────
 
-async function sendTelegramLead(psid: string, productName: string, customerMessage: string) {
+async function sendTelegramLead(psid: string, productId: string, productName: string, customerMessage: string) {
+  try {
+    await prisma.messengerLead.create({
+      data: {
+        psid,
+        productId,
+        productName,
+        customerMessage,
+      },
+    })
+  } catch (err) {
+    console.error('Failed to save Messenger lead:', err)
+  }
+
   const text = [
     '🔥 New Messenger Lead',
     '',

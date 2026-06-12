@@ -22,6 +22,11 @@ import {
     ChevronRight,
     Home,
     AlertCircle,
+    Bot,
+    MessageSquare,
+    CheckCircle2,
+    XCircle,
+    Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,11 +103,57 @@ const RECENT_ACTIVITY = [
     { id: "USR-5541", name: "Evan Wright", email: "evan@example.com", date: "2024-03-12" },
 ];
 
+type AdminTab = "dashboard" | "users" | "products" | "chatbot";
+
+type ChatbotStatus = {
+    webhook: {
+        verifyTokenConfigured: boolean;
+        pageAccessTokenConfigured: boolean;
+    };
+    telegram: {
+        botTokenConfigured: boolean;
+        chatIdConfigured: boolean;
+    };
+};
+
+type MessengerLead = {
+    id: string;
+    psid: string;
+    productId: string | null;
+    productName: string;
+    customerMessage: string;
+    status: "new" | "contacted" | "closed";
+    createdAt: string;
+};
+
+const CHATBOT_FLOW_STEPS = [
+    "Greeting or product keyword shows the product carousel.",
+    "Customer selects a product.",
+    "Bot shows all color images for the selected product.",
+    "Customer sends another message within 30 minutes.",
+    "Telegram lead is sent and the lead is saved for admin review.",
+];
+
+const CHATBOT_KEYWORDS = [
+    "hi",
+    "hello",
+    "សួស្តី",
+    "ជំរាបសួរ",
+    "shop",
+    "product",
+    "buy",
+    "order",
+    "មើល",
+    "ទិញ",
+    "អាវ",
+    "ខោ",
+];
+
 
 // --- Main Admin Dashboard Component ---
 
 export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState<"dashboard" | "users" | "products">("dashboard");
+    const [activeTab, setActiveTab] = useState<AdminTab>("dashboard");
     const [isDarkMode, setIsDarkMode] = useState(true);
 
     // Product State (React Query)
@@ -143,12 +194,44 @@ export default function AdminDashboard() {
 
     // Low stock alerts
     const [lowStockProducts, setLowStockProducts] = useState<Product[] | undefined>(undefined);
+    const [chatbotStatus, setChatbotStatus] = useState<ChatbotStatus | null>(null);
+    const [messengerLeads, setMessengerLeads] = useState<MessengerLead[]>([]);
+    const [isChatbotLoading, setIsChatbotLoading] = useState(false);
 
     useEffect(() => {
         getInventoryAlerts(15).then((res) => {
             if (res.success && res.data) setLowStockProducts(res.data);
         });
     }, []);
+
+    useEffect(() => {
+        if (activeTab !== "chatbot") return;
+
+        const loadChatbotData = async () => {
+            setIsChatbotLoading(true);
+            try {
+                const [statusRes, leadsRes] = await Promise.all([
+                    fetch("/api/chatbot/status"),
+                    fetch("/api/messenger-leads?limit=10"),
+                ]);
+
+                if (!statusRes.ok || !leadsRes.ok) {
+                    throw new Error("Failed to load chatbot data");
+                }
+
+                const statusData = await statusRes.json();
+                const leadsData = await leadsRes.json();
+                setChatbotStatus(statusData);
+                setMessengerLeads(leadsData.leads ?? []);
+            } catch {
+                toast.error("Failed to load chatbot data");
+            } finally {
+                setIsChatbotLoading(false);
+            }
+        };
+
+        loadChatbotData();
+    }, [activeTab]);
 
     // Toggle Dark Mode (Mock implementation - ideally use next-themes)
     const toggleTheme = () => {
@@ -211,6 +294,25 @@ export default function AdminDashboard() {
             });
     };
 
+    const handleLeadStatusChange = async (id: string, status: MessengerLead["status"]) => {
+        const previousLeads = messengerLeads;
+        setMessengerLeads((leads) => leads.map((lead) => lead.id === id ? { ...lead, status } : lead));
+
+        try {
+            const res = await fetch("/api/messenger-leads", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, status }),
+            });
+
+            if (!res.ok) throw new Error("Failed to update lead");
+            toast.success("Lead status updated");
+        } catch {
+            setMessengerLeads(previousLeads);
+            toast.error("Failed to update lead status");
+        }
+    };
+
     // --- Sub-Components ---
 
     const SidebarContent = () => (
@@ -244,6 +346,14 @@ export default function AdminDashboard() {
                     >
                         <Package className="mr-2 h-4 w-4" />
                         Products
+                    </Button>
+                    <Button
+                        variant={activeTab === "chatbot" ? "secondary" : "ghost"}
+                        className="justify-start"
+                        onClick={() => setActiveTab("chatbot")}
+                    >
+                        <Bot className="mr-2 h-4 w-4" />
+                        Chat Bot
                     </Button>
                 </nav>
             </div>
@@ -703,6 +813,200 @@ export default function AdminDashboard() {
                                 onSuccess={() => setProductParams({ page: 1 })}
                             />
                         </>
+                    )}
+
+                    {activeTab === "chatbot" && (
+                        <div className="space-y-6">
+                            <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <h1 className="text-2xl font-semibold tracking-tight">Chat Bot</h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        Manage the Messenger product flow, Telegram alerts, and customer leads.
+                                    </p>
+                                </div>
+                                <Button variant="outline" onClick={() => setActiveTab("products")}>
+                                    <Package className="mr-2 h-4 w-4" />
+                                    Manage Products
+                                </Button>
+                            </div>
+
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Webhook</CardTitle>
+                                        <Bot className="h-4 w-4 text-blue-500" />
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Verify token</span>
+                                            {chatbotStatus?.webhook.verifyTokenConfigured ? (
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                            ) : (
+                                                <XCircle className="h-4 w-4 text-red-500" />
+                                            )}
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Page token</span>
+                                            {chatbotStatus?.webhook.pageAccessTokenConfigured ? (
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                            ) : (
+                                                <XCircle className="h-4 w-4 text-red-500" />
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Telegram</CardTitle>
+                                        <Send className="h-4 w-4 text-emerald-500" />
+                                    </CardHeader>
+                                    <CardContent className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Bot token</span>
+                                            {chatbotStatus?.telegram.botTokenConfigured ? (
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                            ) : (
+                                                <XCircle className="h-4 w-4 text-red-500" />
+                                            )}
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span>Chat ID</span>
+                                            {chatbotStatus?.telegram.chatIdConfigured ? (
+                                                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                            ) : (
+                                                <XCircle className="h-4 w-4 text-red-500" />
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Recent Leads</CardTitle>
+                                        <MessageSquare className="h-4 w-4 text-violet-500" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">{messengerLeads.length}</div>
+                                        <p className="text-xs text-muted-foreground">Latest saved Messenger leads</p>
+                                    </CardContent>
+                                </Card>
+
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Lead Capture</CardTitle>
+                                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">30 min</div>
+                                        <p className="text-xs text-muted-foreground">Selected product state expiry</p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            <div className="grid gap-4 lg:grid-cols-3">
+                                <Card className="lg:col-span-2">
+                                    <CardHeader>
+                                        <CardTitle>Messenger Leads</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="rounded-md border">
+                                            <div className="relative w-full overflow-auto">
+                                                <table className="w-full caption-bottom text-sm">
+                                                    <thead className="[&_tr]:border-b">
+                                                        <tr className="border-b">
+                                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Product</th>
+                                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Message</th>
+                                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Time</th>
+                                                            <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="[&_tr:last-child]:border-0">
+                                                        {isChatbotLoading ? (
+                                                            <tr>
+                                                                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                                                                    Loading chatbot data...
+                                                                </td>
+                                                            </tr>
+                                                        ) : messengerLeads.length === 0 ? (
+                                                            <tr>
+                                                                <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                                                                    No Messenger leads yet
+                                                                </td>
+                                                            </tr>
+                                                        ) : (
+                                                            messengerLeads.map((lead) => (
+                                                                <tr key={lead.id} className="border-b transition-colors hover:bg-muted/50">
+                                                                    <td className="p-4 align-top">
+                                                                        <div className="font-medium">{lead.productName}</div>
+                                                                        <div className="text-xs text-muted-foreground">PSID: {lead.psid}</div>
+                                                                    </td>
+                                                                    <td className="max-w-[280px] p-4 align-top">
+                                                                        <p className="line-clamp-3">{lead.customerMessage}</p>
+                                                                    </td>
+                                                                    <td className="p-4 align-top text-muted-foreground">
+                                                                        {new Date(lead.createdAt).toLocaleString()}
+                                                                    </td>
+                                                                    <td className="p-4 align-top">
+                                                                        <select
+                                                                            value={lead.status}
+                                                                            onChange={(e) => handleLeadStatusChange(lead.id, e.target.value as MessengerLead["status"])}
+                                                                            className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                                                                        >
+                                                                            <option value="new">New</option>
+                                                                            <option value="contacted">Contacted</option>
+                                                                            <option value="closed">Closed</option>
+                                                                        </select>
+                                                                    </td>
+                                                                </tr>
+                                                            ))
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                <div className="space-y-4">
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Current Bot Flow</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <ol className="space-y-3 text-sm">
+                                                {CHATBOT_FLOW_STEPS.map((step, index) => (
+                                                    <li key={step} className="flex gap-3">
+                                                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                                                            {index + 1}
+                                                        </span>
+                                                        <span className="text-muted-foreground">{step}</span>
+                                                    </li>
+                                                ))}
+                                            </ol>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card>
+                                        <CardHeader>
+                                            <CardTitle>Trigger Keywords</CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <div className="flex flex-wrap gap-2">
+                                                {CHATBOT_KEYWORDS.map((keyword) => (
+                                                    <span
+                                                        key={keyword}
+                                                        className="rounded-md border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                                                    >
+                                                        {keyword}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                            </div>
+                        </div>
                     )}
 
                 </main>
