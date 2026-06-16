@@ -40,13 +40,17 @@ function AudioCard({ title, description, settingKey, icon, currentUrl, onSaved }
       formData.append('file', file);
 
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Upload failed');
+      }
 
       const data = await res.json();
       setPendingUrl(data.url);
       toast.success('Audio uploaded — click Save to apply');
-    } catch {
-      toast.error('Failed to upload audio file');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to upload audio file';
+      toast.error(message);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

@@ -16,10 +16,13 @@ export const POST = async (req: Request) => {
         const safeName = file.name.replace(/\s+/g, "_");
         const key = `uploads/${Date.now()}_${safeName}`;
 
-        // If running on Vercel or a Blob token is provided, upload to Vercel Blob (persistent)
-            if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
-                try {
-                    const blob = await put(key, file.stream(), {
+        // Read buffer ONCE at the start to avoid disturbing/locking the body multiple times
+        const buffer = Buffer.from(await file.arrayBuffer());
+
+        // If running on Vercel or a Blob token is provided, try Vercel Blob first
+        if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
+            try {
+                const blob = await put(key, buffer, {
                     access: "public",
                     contentType: file.type || "application/octet-stream",
                     addRandomSuffix: true,
@@ -27,13 +30,18 @@ export const POST = async (req: Request) => {
                 return NextResponse.json({ message: "Success", status: 201, url: blob.url });
             } catch (error) {
                 console.error("Error uploading to Vercel Blob:", error);
-                return NextResponse.json({ error: "Failed to upload file." }, { status: 500 });
+                // If not running on Vercel (e.g. local dev), fallback to local file writing
+                if (!process.env.VERCEL) {
+                    console.warn("Vercel Blob upload failed on localhost. Falling back to local upload.");
+                } else {
+                    const message = error instanceof Error ? error.message : String(error);
+                    return NextResponse.json({ error: `Vercel Blob failed: ${message}` }, { status: 500 });
+                }
             }
         }
 
         // Development fallback: write to local /public/uploads
         try {
-            const buffer = Buffer.from(await file.arrayBuffer());
             const uploadDir = path.join(process.cwd(), "public/uploads");
             if (!existsSync(uploadDir)) {
                 mkdirSync(uploadDir, { recursive: true });
@@ -42,10 +50,12 @@ export const POST = async (req: Request) => {
             return NextResponse.json({ message: "Success", status: 201, url: `/uploads/${path.basename(key)}` });
         } catch (error) {
             console.error("Error writing file locally:", error);
-            return NextResponse.json({ error: "Failed to write file." }, { status: 500 });
+            const message = error instanceof Error ? error.message : String(error);
+            return NextResponse.json({ error: `Failed to write file locally: ${message}` }, { status: 500 });
         }
     } catch (error) {
         console.error("Error processing upload:", error);
-        return NextResponse.json({ error: "Failed to process request." }, { status: 500 });
+        const message = error instanceof Error ? error.message : String(error);
+        return NextResponse.json({ error: `Failed to process request: ${message}` }, { status: 500 });
     }
 };
