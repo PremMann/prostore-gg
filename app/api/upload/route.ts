@@ -16,18 +16,24 @@ export const POST = async (req: Request) => {
         const safeName = file.name.replace(/\s+/g, "_");
         const key = `uploads/${Date.now()}_${safeName}`;
 
-        // If running on Vercel or a Blob token is provided, upload to Vercel Blob (persistent)
-            if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
-                try {
-                    const blob = await put(key, file.stream(), {
+        // If running on Vercel or a Blob token is provided, try Vercel Blob first
+        if (process.env.VERCEL || process.env.BLOB_READ_WRITE_TOKEN) {
+            try {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                const blob = await put(key, buffer, {
                     access: "public",
                     contentType: file.type || "application/octet-stream",
                     addRandomSuffix: true,
                 });
                 return NextResponse.json({ message: "Success", status: 201, url: blob.url });
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Error uploading to Vercel Blob:", error);
-                return NextResponse.json({ error: "Failed to upload file." }, { status: 500 });
+                // If not running on Vercel (e.g. local dev), fallback to local file writing
+                if (!process.env.VERCEL) {
+                    console.warn("Vercel Blob upload failed on localhost. Falling back to local upload.");
+                } else {
+                    return NextResponse.json({ error: `Vercel Blob failed: ${error?.message || error}` }, { status: 500 });
+                }
             }
         }
 
@@ -40,12 +46,12 @@ export const POST = async (req: Request) => {
             }
             await writeFile(path.join(uploadDir, path.basename(key)), buffer);
             return NextResponse.json({ message: "Success", status: 201, url: `/uploads/${path.basename(key)}` });
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error writing file locally:", error);
-            return NextResponse.json({ error: "Failed to write file." }, { status: 500 });
+            return NextResponse.json({ error: `Failed to write file locally: ${error?.message || error}` }, { status: 500 });
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error processing upload:", error);
-        return NextResponse.json({ error: "Failed to process request." }, { status: 500 });
+        return NextResponse.json({ error: `Failed to process request: ${error?.message || error}` }, { status: 500 });
     }
 };
