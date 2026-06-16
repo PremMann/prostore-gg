@@ -111,8 +111,8 @@ function hasActiveProductSelection(psid: string, state: UserState): state is Use
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const mode      = searchParams.get('hub.mode')
-  const token     = searchParams.get('hub.verify_token')
+  const mode = searchParams.get('hub.mode')
+  const token = searchParams.get('hub.verify_token')
   const challenge = searchParams.get('hub.challenge')
 
   if (mode === 'subscribe' && token === requireEnv('VERIFY_TOKEN')) {
@@ -157,7 +157,7 @@ export async function POST(req: NextRequest) {
 
         console.log('EVENT from PSID:', psid)
 
-        const message  = event.message
+        const message = event.message
         const postback = event.postback
 
         const payload = message?.quick_reply?.payload || postback?.payload
@@ -237,7 +237,7 @@ async function handleText(psid: string, text: string) {
 async function handlePostback(psid: string, payload: string) {
   if (payload === 'GET_STARTED') {
     clearUserState(psid)
-    await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏\n — Simple Style For Man 🇰🇭`)
+    await sendText(psid, `សួស្តី! ស្វាគមន៍មកកាន់ PROMELODY 🙏 🇰🇭`)
     return sendMainMenu(psid)
   }
 
@@ -272,6 +272,12 @@ async function handleProductSelection(psid: string, productId: string) {
     selectedAt: Date.now(),
   })
 
+  // Play product voice message before showing color images
+  const { productAudioUrl } = await getBotAudio()
+  if (productAudioUrl) {
+    await sendAudio(psid, productAudioUrl)
+  }
+
   await sendProductColorCarousel(psid, product)
 }
 
@@ -298,10 +304,56 @@ async function sendProductColorCarousel(psid: string, product: BotProduct) {
 
 // ── MAIN MENU CAROUSEL (dynamic from DB) ──────────────────────
 
+// Audio URL cache (reads from BotSettings table, 60s TTL)
+let cachedAudio: { greetingAudioUrl: string; productAudioUrl: string } | null = null
+let audioCacheTime = 0
+const AUDIO_CACHE_TTL = 60_000
+
+async function getBotAudio() {
+  const now = Date.now()
+  if (cachedAudio && now - audioCacheTime < AUDIO_CACHE_TTL) return cachedAudio
+
+  try {
+    const rows = await prisma.botSettings.findMany({
+      where: { key: { in: ['greetingAudioUrl', 'productAudioUrl'] } },
+    })
+    cachedAudio = {
+      greetingAudioUrl: rows.find(r => r.key === 'greetingAudioUrl')?.value ?? '',
+      productAudioUrl: rows.find(r => r.key === 'productAudioUrl')?.value ?? '',
+    }
+    audioCacheTime = now
+  } catch (err) {
+    console.error('Failed to load bot audio settings:', err)
+    cachedAudio = cachedAudio ?? { greetingAudioUrl: '', productAudioUrl: '' }
+  }
+  return cachedAudio
+}
+
+async function sendAudio(psid: string, audioUrl: string) {
+  await sendRequest({
+    recipient: { id: psid },
+    message: {
+      attachment: {
+        type: 'audio',
+        payload: {
+          url: audioUrl,
+          is_reusable: true,
+        },
+      },
+    },
+  })
+}
+
 async function sendMainMenu(psid: string) {
   const products = await getProducts()
   if (products.length === 0) {
     return sendText(psid, 'សូមទោស មិនទាន់មានផលិតផលនៅឡើយទេ 🙏')
+  }
+
+  // Play greeting voice message before the carousel
+  const { greetingAudioUrl } = await getBotAudio()
+  if (greetingAudioUrl) {
+    await sendAudio(psid, greetingAudioUrl)
   }
 
   await sendTyping(psid)
@@ -310,7 +362,7 @@ async function sendMainMenu(psid: string) {
     title: p.nameKh || p.name,
     subtitle: `💰 $${p.price.toFixed(2)}`,
     image_url: p.image,
-    buttons: [{ type: 'postback', title: 'ជ្រើសរើស', payload: `SHOW_PRODUCT_${p.id}` }],
+    buttons: [{ type: 'postback', title: 'មើលពណ៏', payload: `SHOW_PRODUCT_${p.id}` }],
   }))
 
   await sendRequest({

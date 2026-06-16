@@ -55,6 +55,7 @@ import ProductForm from "./product-form";
 import UserForm from "./user-form";
 import { ProductTable } from "./product-table";
 import { CSVImportModal } from "./product-table/CSVImportModal";
+import { BotAudioSettings } from "./BotAudioSettings";
 import { useProducts } from "@/hooks/useProducts";
 import { useUsers } from "@/hooks/useUsers";
 import { getInventoryAlerts } from "@/lib/actions/inventory.actions";
@@ -197,6 +198,7 @@ export default function AdminDashboard() {
     const [chatbotStatus, setChatbotStatus] = useState<ChatbotStatus | null>(null);
     const [messengerLeads, setMessengerLeads] = useState<MessengerLead[]>([]);
     const [isChatbotLoading, setIsChatbotLoading] = useState(false);
+    const [botAudioSettings, setBotAudioSettings] = useState<Record<string, string>>({ greetingAudioUrl: '', productAudioUrl: '' });
 
     useEffect(() => {
         getInventoryAlerts(15).then((res) => {
@@ -210,9 +212,10 @@ export default function AdminDashboard() {
         const loadChatbotData = async () => {
             setIsChatbotLoading(true);
             try {
-                const [statusRes, leadsRes] = await Promise.all([
+                const [statusRes, leadsRes, audioRes] = await Promise.all([
                     fetch("/api/chatbot/status"),
                     fetch("/api/messenger-leads?limit=10"),
+                    fetch("/api/bot-settings"),
                 ]);
 
                 if (!statusRes.ok || !leadsRes.ok) {
@@ -221,8 +224,10 @@ export default function AdminDashboard() {
 
                 const statusData = await statusRes.json();
                 const leadsData = await leadsRes.json();
+                const audioData = audioRes.ok ? await audioRes.json() : {};
                 setChatbotStatus(statusData);
                 setMessengerLeads(leadsData.leads ?? []);
+                setBotAudioSettings(audioData);
             } catch {
                 toast.error("Failed to load chatbot data");
             } finally {
@@ -903,6 +908,9 @@ export default function AdminDashboard() {
                                     </CardContent>
                                 </Card>
                             </div>
+
+                            {/* Audio Settings */}
+                            <BotAudioSettings initialSettings={botAudioSettings} />
 
                             <div className="grid gap-4 lg:grid-cols-3">
                                 <Card className="lg:col-span-2">
