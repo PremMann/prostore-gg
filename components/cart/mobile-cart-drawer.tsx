@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ShoppingCart, X, Plus, Minus, Trash2, MessageCircle } from 'lucide-react';
+import { ShoppingCart, X, Plus, Minus, Trash2, Loader2, Phone, CheckCircle2 } from 'lucide-react';
 import { useCart } from '@/components/cart/cart-context';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
-import { checkoutViaTelegram } from '@/lib/cart-storage';
+import { toast } from 'sonner';
 import { useLanguage } from '@/components/catalog/language-context';
 
 export default function MobileCartDrawer() {
@@ -14,6 +14,9 @@ export default function MobileCartDrawer() {
     const { t } = useLanguage();
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [phone, setPhone] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState(false);
 
     // Check if we're on mobile
     useEffect(() => {
@@ -28,10 +31,40 @@ export default function MobileCartDrawer() {
     // Don't render on desktop or while loading
     if (!isMobile || isLoading) return null;
 
-    const handleCheckout = () => {
-        if (cart) {
-            checkoutViaTelegram(cart);
-            setIsOpen(false);
+    const handleConfirmOrder = async () => {
+        if (!phone.trim()) {
+            toast.error('Please enter your phone number');
+            return;
+        }
+        if (!cart) return;
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/order-confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone: phone.trim(),
+                    items: cart.items.map((i) => ({
+                        name: i.name,
+                        qty: i.qty,
+                        price: i.price,
+                        size: i.size,
+                        color: i.color,
+                    })),
+                    itemsPrice: cart.itemsPrice,
+                    shippingPrice: cart.shippingPrice,
+                    totalPrice: cart.totalPrice,
+                }),
+            });
+
+            if (!res.ok) throw new Error();
+            setIsConfirmed(true);
+            toast.success('Order confirmed! We will contact you shortly.');
+        } catch {
+            toast.error('Failed to confirm order. Please try again.');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -211,14 +244,41 @@ export default function MobileCartDrawer() {
                             </div>
                         </div>
 
-                        {/* Checkout Button */}
-                        <Button
-                            onClick={handleCheckout}
-                            className="w-full py-6 text-base font-medium bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                        >
-                            <MessageCircle className="w-5 h-5 mr-2" />
-                            {t('cart.checkout')}
-                        </Button>
+                        {/* Phone Input + Confirm */}
+                        {isConfirmed ? (
+                            <div className="flex flex-col items-center gap-3 py-4 text-center">
+                                <CheckCircle2 className="w-10 h-10 text-green-500" />
+                                <p className="text-sm font-medium">Order confirmed!</p>
+                                <p className="text-xs text-zinc-500">We&apos;ll contact you at <span className="font-semibold text-foreground">{phone}</span> shortly.</p>
+                                <Button variant="outline" size="sm" onClick={() => { setIsOpen(false); setIsConfirmed(false); }}>
+                                    Close
+                                </Button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                                    <input
+                                        type="tel"
+                                        value={phone}
+                                        onChange={(e) => setPhone(e.target.value)}
+                                        placeholder="Your phone number"
+                                        className="w-full pl-10 pr-3 py-2.5 text-sm border border-zinc-200 dark:border-zinc-700 rounded-xl bg-white dark:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-zinc-400 transition-shadow"
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleConfirmOrder}
+                                    disabled={isSubmitting || !phone.trim()}
+                                    className="w-full py-6 text-base font-medium"
+                                >
+                                    {isSubmitting ? (
+                                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Confirming...</>
+                                    ) : (
+                                        'Confirm Order'
+                                    )}
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

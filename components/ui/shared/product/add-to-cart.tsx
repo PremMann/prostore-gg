@@ -8,11 +8,24 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/cart/cart-context';
 
-export default function AddToCart({ product }: { product: Product }) {
+export default function AddToCart({
+    product,
+    onColorChange,
+}: {
+    product: Product;
+    onColorChange?: (color: { name: string; imageUrl: string }) => void;
+}) {
     const { addItem } = useCart();
     const [isLoading, setIsLoading] = useState(false);
     const [selectedSize, setSelectedSize] = useState<string>(product.sizes?.[0] || '');
-    const [selectedColor, setSelectedColor] = useState<string>(product.colors?.[0]?.name || '');
+    const [selectedColor, setSelectedColor] = useState<{ name: string; imageUrl: string } | null>(
+        product.colors?.[0] ?? null
+    );
+
+    const handleColorSelect = (color: { name: string; imageUrl: string }) => {
+        setSelectedColor(color);
+        onColorChange?.(color);
+    };
 
     const handleAddToCart = async () => {
         if (product.sizes.length > 0 && !selectedSize) {
@@ -33,9 +46,10 @@ export default function AddToCart({ product }: { product: Product }) {
             slug: product.slug,
             price: product.price.toString(),
             qty: 1,
-            image: product.images[0],
+            // Use the color-specific image if a color is selected, otherwise fall back to first product image
+            image: selectedColor?.imageUrl || product.images[0],
             size: selectedSize || undefined,
-            color: selectedColor || undefined,
+            color: selectedColor?.name || undefined,
         });
 
         if (result.success) {
@@ -80,10 +94,10 @@ export default function AddToCart({ product }: { product: Product }) {
                                     <button
                                         key={color.name}
                                         type="button"
-                                        onClick={() => setSelectedColor(color.name)}
+                                        onClick={() => handleColorSelect(color)}
                                         className={cn(
                                             "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white",
-                                            selectedColor === color.name ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                            selectedColor?.name === color.name ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                         )}
                                     >
                                         {color.name}

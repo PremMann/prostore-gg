@@ -5,8 +5,22 @@ import { cn } from '@/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const ProductImages = ({ images }: { images: string[] }) => {
+interface ProductImagesProps {
+  images: string[];
+  overrideImage?: string;
+  onThumbnailClick?: (index: number) => void;
+}
+
+const ProductImages = ({ images, overrideImage, onThumbnailClick }: ProductImagesProps) => {
   const [current, setCurrent] = useState(0);
+
+  // Which image to show in the main viewer
+  const displayImage = overrideImage ?? images[current];
+
+  // Which thumbnail index to highlight (-1 when color imageUrl isn't in the images array)
+  const highlightedIndex = overrideImage
+    ? images.indexOf(overrideImage)
+    : current;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const scroll = (direction: 'left' | 'right') => {
@@ -26,7 +40,7 @@ const ProductImages = ({ images }: { images: string[] }) => {
     <div className='space-y-4'>
       <div className='relative w-full aspect-square overflow-hidden rounded-none border border-zinc-200 dark:border-zinc-800 bg-muted'>
         <Image
-          src={images[current]}
+          src={displayImage}
           alt='product image'
           fill
           className='object-contain'
@@ -56,10 +70,13 @@ const ProductImages = ({ images }: { images: string[] }) => {
             {images.map((image, index) => (
               <button
                 key={image}
-                onClick={() => setCurrent(index)}
+                onClick={() => {
+                  setCurrent(index);
+                  onThumbnailClick?.(index);
+                }}
                 className={cn(
                   'relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 border rounded-none overflow-hidden cursor-pointer hover:border-black dark:hover:border-white transition-colors',
-                  current === index ? 'border-black dark:border-white' : 'border-zinc-200 dark:border-zinc-800'
+                  highlightedIndex === index ? 'border-black dark:border-white' : 'border-zinc-200 dark:border-zinc-800'
                 )}
               >
                 <Image
