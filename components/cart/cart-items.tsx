@@ -1,8 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useCart } from '@/components/cart/cart-context';
-import { checkoutViaTelegram } from '@/lib/cart-storage';
-import { Minus, Plus, ShoppingBag, Trash, MessageCircle } from 'lucide-react';
+import { Minus, Plus, ShoppingBag, Trash, Loader2, CheckCircle2, Phone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,9 @@ import { toast } from 'sonner';
 
 export default function CartItems() {
     const { cart, updateItem, removeItem, clearCart } = useCart();
+    const [phone, setPhone] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState(false);
 
     // If no cart or empty items, show empty state
     if (!cart || cart.items.length === 0) {
@@ -50,15 +53,67 @@ export default function CartItems() {
         }
     };
 
-    const handleTelegramCheckout = () => {
-        checkoutViaTelegram(cart);
-        toast.success('Opening Telegram to complete your order...');
-    };
-
     const handleClearCart = () => {
         clearCart();
         toast.success('Cart cleared');
     };
+
+    const handleConfirmOrder = async () => {
+        if (!phone.trim()) {
+            toast.error('Please enter your phone number');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const res = await fetch('/api/order-confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    phone: phone.trim(),
+                    items: items.map((i) => ({
+                        name: i.name,
+                        qty: i.qty,
+                        price: i.price,
+                        size: i.size,
+                        color: i.color,
+                    })),
+                    itemsPrice,
+                    shippingPrice,
+                    totalPrice,
+                }),
+            });
+
+            if (!res.ok) throw new Error('Failed to confirm order');
+
+            setIsConfirmed(true);
+            clearCart();
+            toast.success('Order confirmed! We will contact you shortly.');
+        } catch {
+            toast.error('Failed to confirm order. Please try again.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (isConfirmed) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6 text-center">
+                <div className="p-6 rounded-full bg-green-50 dark:bg-green-950/30">
+                    <CheckCircle2 className="w-14 h-14 text-green-500" />
+                </div>
+                <div className="space-y-2">
+                    <h2 className="text-2xl font-bold">Order Confirmed!</h2>
+                    <p className="text-muted-foreground max-w-sm">
+                        Thank you! We&apos;ve received your order and will contact you at <span className="font-semibold text-foreground">{phone}</span> shortly.
+                    </p>
+                </div>
+                <Link href="/">
+                    <Button size="lg" variant="outline">Continue Shopping</Button>
+                </Link>
+            </div>
+        );
+    }
 
     return (
         <div className="wrapper py-10">
@@ -68,17 +123,6 @@ export default function CartItems() {
                     Clear Cart
                 </Button>
             </div>
-
-            {/* Guest Cart Notice */}
-            {/* <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-3">
-                    <ShoppingBag className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-                    <div>
-                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200">Guest Cart</p>
-                        <p className="text-xs text-amber-600 dark:text-amber-400">Your cart is saved locally. Sign in to save it permanently.</p>
-                    </div>
-                </div>
-            </div> */}
 
             <div className="grid md:grid-cols-12 gap-8">
                 {/* Cart Items List */}
@@ -151,7 +195,7 @@ export default function CartItems() {
                     </Card>
                 </div>
 
-                {/* Summary Card */}
+                {/* Order Summary Card */}
                 <div className="md:col-span-4">
                     <Card>
                         <CardContent className="p-6 space-y-4">
@@ -166,37 +210,47 @@ export default function CartItems() {
                                     <span className="text-muted-foreground">Shipping</span>
                                     <span>${shippingPrice}</span>
                                 </div>
-
-
                                 <div className="h-px bg-border my-4" />
-
                                 <div className="flex justify-between font-bold text-lg">
                                     <span>Total</span>
                                     <span>${totalPrice}</span>
                                 </div>
                             </div>
 
-                            {/* Primary CTA: Telegram Checkout */}
+                            {/* Phone Number Input */}
+                            <div className="space-y-2 pt-2">
+                                <label htmlFor="phone-input" className="text-sm font-medium flex items-center gap-2">
+                                    <Phone className="w-4 h-4" />
+                                    Your Phone Number
+                                </label>
+                                <input
+                                    id="phone-input"
+                                    type="tel"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    placeholder="e.g. 012 345 678"
+                                    className="w-full px-3 py-2.5 text-sm border border-input rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    We&apos;ll contact you at this number to confirm your order.
+                                </p>
+                            </div>
+
+                            {/* Confirm Order Button */}
                             <Button
-                                className="w-full h-12 text-lg bg-[#229ED9] hover:bg-[#1E8BBF] cursor-pointer"
-                                size="lg"
-                                onClick={handleTelegramCheckout}
+                                className="w-full h-12 text-sm font-semibold tracking-wide cursor-pointer"
+                                onClick={handleConfirmOrder}
+                                disabled={isSubmitting || !phone.trim()}
                             >
-                                <MessageCircle className="w-5 h-5 mr-2" />
-                                Checkout via Telegram
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Confirming...
+                                    </>
+                                ) : (
+                                    'Confirm Order'
+                                )}
                             </Button>
-
-                            {/* Secondary CTA: Sign In */}
-                            {/* <Link href="/sign-in?callbackUrl=/cart" className="w-full inline-block">
-                                <Button className="w-full" size="lg" variant="outline">
-                                    <LogIn className="w-4 h-4 mr-2" />
-                                    Sign In to Save Cart
-                                </Button>
-                            </Link> */}
-
-                            <p className="text-xs text-muted-foreground text-center">
-                                Your order will be confirmed via Telegram chat
-                            </p>
                         </CardContent>
                     </Card>
                 </div>

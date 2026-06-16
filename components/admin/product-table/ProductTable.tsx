@@ -85,14 +85,6 @@ export function ProductTable({
             <table className="w-full caption-bottom text-sm">
               <thead className="[&_tr]:border-b">
                 <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                  <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-12">
-                    <input
-                      type="checkbox"
-                      checked={selectAll && products.length > 0}
-                      onChange={(e) => handleSelectAll(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                  </th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Product</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Category</th>
                   <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Price</th>
@@ -106,7 +98,7 @@ export function ProductTable({
                   <ProductTableSkeleton />
                 ) : products.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
                       No products found
                     </td>
                   </tr>

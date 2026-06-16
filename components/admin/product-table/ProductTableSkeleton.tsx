@@ -2,7 +2,7 @@
 
 export function ProductTableSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <tbody>
+    <>
       {Array.from({ length: rows }).map((_, i) => (
         <tr key={i} className="border-b animate-pulse">
           <td className="p-4 align-middle">
@@ -31,6 +31,6 @@ export function ProductTableSkeleton({ rows = 5 }: { rows?: number }) {
           </td>
         </tr>
       ))}
-    </tbody>
+    </>
   );
 }
