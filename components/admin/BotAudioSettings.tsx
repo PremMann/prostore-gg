@@ -48,8 +48,9 @@ function AudioCard({ title, description, settingKey, icon, currentUrl, onSaved }
       const data = await res.json();
       setPendingUrl(data.url);
       toast.success('Audio uploaded — click Save to apply');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to upload audio file');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to upload audio file';
+      toast.error(message);
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
