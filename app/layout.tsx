@@ -23,6 +23,9 @@ export const metadata: Metadata = {
   },
   description: APP_DESCRIPTION,
   metadataBase: new URL(SERVER_URL),
+  icons: {
+    icon: '/images/gg.png',
+  },
 };
 
 export default function RootLayout({

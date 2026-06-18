@@ -140,7 +140,7 @@ const BioPage = () => {
 
                 {/* Latest Drop Card */}
                 <motion.div variants={itemVariants} className="w-full mt-2">
-                    <Link href="/catalog" className="block relative group overflow-hidden rounded-2xl">
+                    <Link href="/" className="block relative group overflow-hidden rounded-2xl">
                         <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-fuchsia-600 opacity-90 transition-opacity group-hover:opacity-100" />
                         <div className="relative p-6 flex items-center justify-between text-white">
                             <div className="flex flex-col">
