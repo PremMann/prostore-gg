@@ -8,7 +8,7 @@ export default function CartButton() {
 
     return (
         <Link href="/cart" className="text-sm tracking-widest font-bold hover:opacity-70 transition-opacity">
-            BAG ({!isLoading ? itemCount : 0})
+            CART ({!isLoading ? itemCount : 0})
         </Link>
     );
 }

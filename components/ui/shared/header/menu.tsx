@@ -36,17 +36,14 @@ const Menu = ({ userButton }: { userButton: React.ReactNode }) => {
           <SheetContent side="left" className='flex flex-col items-start w-full sm:w-full overflow-y-auto bg-white dark:bg-black'>
             <SheetTitle className="mb-4 uppercase tracking-widest">{t('header.menu')}</SheetTitle>
 
-            {/* Category Links */}
+            {/* Shop Link */}
             <div className="flex flex-col gap-4 w-full border-b border-black/10 dark:border-white/10 pb-6 mb-6">
-              {PRODUCT_CATEGORIES.map((category) => (
-                <Link
-                  key={category.value}
-                  href={`/search?category=${category.value}`}
-                  className="py-2 text-2xl font-bold uppercase tracking-widest text-black dark:text-white hover:opacity-70 transition-opacity"
-                >
-                  {t(`category.${category.value}` as keyof typeof en)}
-                </Link>
-              ))}
+              <Link
+                href="/"
+                className="py-2 text-2xl font-bold uppercase tracking-widest text-black dark:text-white hover:opacity-70 transition-opacity"
+              >
+                {t('header.catalog')}
+              </Link>
             </div>
 
             {/* Cart Link */}

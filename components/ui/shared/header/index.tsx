@@ -18,8 +18,8 @@ const Header = () => {
         {/* Left Nav */}
         <div className='flex items-center gap-6 flex-1'>
           <div className='hidden md:block'>
-            <Link href='/search' className='tracking-widest hover:opacity-70 transition-opacity'>
-              MENU
+            <Link href='/' className='tracking-widest hover:opacity-70 transition-opacity'>
+              SHOP
             </Link>
           </div>
           <div className='md:hidden'>
@@ -37,9 +37,6 @@ const Header = () => {
         {/* Right Nav */}
         <div className='flex items-center justify-end gap-4 lg:gap-6 flex-1'>
           <div className='hidden md:flex items-center gap-6'>
-            <Link href='/search' className='tracking-widest hover:opacity-70 transition-opacity'>
-              SEARCH
-            </Link>
             <UserButton />
           </div>
           <CartButton />

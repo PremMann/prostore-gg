@@ -24,7 +24,7 @@ export default function CartItems() {
                 </div>
                 <h2 className="text-2xl font-bold">Your cart is empty</h2>
                 <p className="text-muted-foreground">Looks like you haven&apos;t added any items to the cart yet.</p>
-                <Link href="/search">
+                <Link href="/">
                     <Button size="lg" className="mt-4">
                         Continue Shopping
                     </Button>
