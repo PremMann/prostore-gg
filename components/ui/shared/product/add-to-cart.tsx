@@ -75,7 +75,7 @@ export default function AddToCart({
                                     type="button"
                                     onClick={() => setSelectedSize(size)}
                                     className={cn(
-                                        "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white",
+                                        "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white cursor-pointer",
                                         selectedSize === size ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
                                     )}
                                 >
@@ -90,18 +90,18 @@ export default function AddToCart({
                     <div className="flex items-center gap-4">
                         <span className="font-semibold w-14">Color:</span>
                         <div className="flex flex-wrap gap-2">
-                                {(product.colors as { name: string; imageUrl: string }[]).map((color) => (
-                                    <button
-                                        key={color.name}
-                                        type="button"
-                                        onClick={() => handleColorSelect(color)}
-                                        className={cn(
-                                            "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white",
-                                            selectedColor?.name === color.name ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
-                                        )}
-                                    >
-                                        {color.name}
-                                    </button>
+                            {(product.colors as { name: string; imageUrl: string }[]).map((color) => (
+                                <button
+                                    key={color.name}
+                                    type="button"
+                                    onClick={() => handleColorSelect(color)}
+                                    className={cn(
+                                        "px-4 py-2 text-xs uppercase tracking-widest border rounded-none transition-all hover:border-black dark:hover:border-white cursor-pointer",
+                                        selectedColor?.name === color.name ? "bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold" : "border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                                    )}
+                                >
+                                    {color.name}
+                                </button>
                             ))}
                         </div>
                     </div>
