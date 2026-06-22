@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { sendMetaServerEvent } from '@/lib/meta-capi-server';
 
 function requireEnv(name: string): string {
   const val = process.env[name];
@@ -20,6 +21,7 @@ interface OrderConfirmPayload {
   itemsPrice: string;
   shippingPrice: string;
   totalPrice: string;
+  purchaseEventId?: string;
 }
 
 async function sendTelegramMessage(text: string): Promise<void> {
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const { phone, items, itemsPrice, shippingPrice, totalPrice } = body;
+  const { phone, items, itemsPrice, shippingPrice, totalPrice, purchaseEventId } = body;
 
   if (!phone || !items || items.length === 0) {
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -83,6 +85,39 @@ export async function POST(req: NextRequest) {
 
   try {
     await sendTelegramMessage(text);
+
+    // Call Meta CAPI Purchase event server-side
+    if (purchaseEventId) {
+      const clientIpAddress = req.headers.get('x-forwarded-for')?.split(',')[0] || req.headers.get('x-real-ip') || '127.0.0.1';
+      const clientUserAgent = req.headers.get('user-agent') || '';
+      const fbp = req.cookies.get('_fbp')?.value;
+      const fbc = req.cookies.get('_fbc')?.value;
+      const referer = req.headers.get('referer') || '';
+
+      sendMetaServerEvent({
+        eventName: 'Purchase',
+        eventId: purchaseEventId,
+        eventSourceUrl: referer,
+        clientIpAddress,
+        clientUserAgent,
+        fbp,
+        fbc,
+        phone,
+        customData: {
+          currency: 'USD',
+          value: Number(totalPrice),
+          content_type: 'product',
+          contents: items.map(item => ({
+            title: item.name,
+            quantity: item.qty,
+            item_price: Number(item.price),
+          })),
+        },
+      }).catch(err => {
+        console.error('[Order Confirm API] Meta CAPI Purchase dispatch failed:', err);
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Order confirm error:', err);

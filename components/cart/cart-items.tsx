@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/components/cart/cart-context';
 import { Minus, Plus, ShoppingBag, Trash, Loader2, CheckCircle2, Phone } from 'lucide-react';
 import Image from 'next/image';
@@ -8,12 +8,27 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { trackMetaEvent } from '@/lib/meta-pixel';
 
 export default function CartItems() {
     const { cart, updateItem, removeItem, clearCart } = useCart();
     const [phone, setPhone] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
+    const [hasInitiatedCheckout, setHasInitiatedCheckout] = useState(false);
+
+    useEffect(() => {
+        if (cart && cart.items.length > 0 && !hasInitiatedCheckout) {
+            setHasInitiatedCheckout(true);
+            trackMetaEvent('InitiateCheckout', {
+                content_ids: cart.items.map((i) => i.productId),
+                content_type: 'product',
+                value: Number(cart.itemsPrice),
+                currency: 'USD',
+                num_items: cart.items.reduce((acc, i) => acc + i.qty, 0),
+            });
+        }
+    }, [cart, hasInitiatedCheckout]);
 
     // If no cart or empty items, show empty state
     if (!cart || cart.items.length === 0) {
@@ -65,6 +80,10 @@ export default function CartItems() {
         }
 
         setIsSubmitting(true);
+        const purchaseEventId = typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
         try {
             const res = await fetch('/api/order-confirm', {
                 method: 'POST',
@@ -81,10 +100,27 @@ export default function CartItems() {
                     itemsPrice,
                     shippingPrice,
                     totalPrice,
+                    purchaseEventId,
                 }),
             });
 
             if (!res.ok) throw new Error('Failed to confirm order');
+
+            // Trigger client-side Purchase event (coordinated CAPI call also happens on server endpoint)
+            trackMetaEvent(
+                'Purchase',
+                {
+                    content_ids: items.map((i) => i.productId),
+                    content_type: 'product',
+                    value: Number(totalPrice),
+                    currency: 'USD',
+                    num_items: items.reduce((acc, i) => acc + i.qty, 0),
+                },
+                {
+                    phone: phone.trim(),
+                },
+                purchaseEventId
+            );
 
             setIsConfirmed(true);
             clearCart();

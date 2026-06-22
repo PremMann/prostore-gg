@@ -1,16 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Product } from '@/types';
 import ProductImages from './product-images';
 import AddToCart from './add-to-cart';
 import ProductPrice from './product-price';
+import { trackMetaEvent } from '@/lib/meta-pixel';
 
 export default function ProductDetailClient({ product }: { product: Product }) {
   // The imageUrl coming from the selected color variant (null = use normal gallery)
   const [colorImageUrl, setColorImageUrl] = useState<string | null>(
     product.colors?.[0]?.imageUrl || null
   );
+
+  useEffect(() => {
+    trackMetaEvent('ViewContent', {
+      content_name: product.name,
+      content_category: product.category,
+      content_ids: [product.id],
+      content_type: 'product',
+      value: Number(product.price),
+      currency: 'USD',
+    });
+  }, [product]);
 
   const handleColorChange = (color: { name: string; imageUrl: string }) => {
     setColorImageUrl(color.imageUrl || null);
