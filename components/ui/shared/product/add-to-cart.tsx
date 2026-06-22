@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/components/cart/cart-context';
+import { trackMetaEvent } from '@/lib/meta-pixel';
 
 export default function AddToCart({
     product,
@@ -54,6 +55,14 @@ export default function AddToCart({
 
         if (result.success) {
             toast.success(result.message);
+            trackMetaEvent('AddToCart', {
+                content_name: product.name,
+                content_category: product.category,
+                content_ids: [product.id],
+                content_type: 'product',
+                value: Number(product.price),
+                currency: 'USD',
+            });
         } else {
             toast.error(result.message);
         }

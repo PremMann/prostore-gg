@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import { useLanguage } from '@/components/catalog/language-context';
+import { trackMetaEvent } from '@/lib/meta-pixel';
 
 export default function MobileCartDrawer() {
     const { cart, itemCount, updateItem, removeItem, isLoading } = useCart();
@@ -17,6 +18,7 @@ export default function MobileCartDrawer() {
     const [phone, setPhone] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isConfirmed, setIsConfirmed] = useState(false);
+    const [hasInitiatedCheckout, setHasInitiatedCheckout] = useState(false);
 
     // Check if we're on mobile
     useEffect(() => {
@@ -27,6 +29,22 @@ export default function MobileCartDrawer() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    useEffect(() => {
+        if (isOpen && cart && cart.items.length > 0 && !hasInitiatedCheckout) {
+            setHasInitiatedCheckout(true);
+            trackMetaEvent('InitiateCheckout', {
+                content_ids: cart.items.map((i) => i.productId),
+                content_type: 'product',
+                value: Number(cart.itemsPrice),
+                currency: 'USD',
+                num_items: cart.items.reduce((acc, i) => acc + i.qty, 0),
+            });
+        }
+        if (!isOpen) {
+            setHasInitiatedCheckout(false);
+        }
+    }, [isOpen, cart, hasInitiatedCheckout]);
 
     // Don't render on desktop or while loading
     if (!isMobile || isLoading) return null;
@@ -39,6 +57,10 @@ export default function MobileCartDrawer() {
         if (!cart) return;
 
         setIsSubmitting(true);
+        const purchaseEventId = typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
         try {
             const res = await fetch('/api/order-confirm', {
                 method: 'POST',
@@ -55,10 +77,28 @@ export default function MobileCartDrawer() {
                     itemsPrice: cart.itemsPrice,
                     shippingPrice: cart.shippingPrice,
                     totalPrice: cart.totalPrice,
+                    purchaseEventId,
                 }),
             });
 
             if (!res.ok) throw new Error();
+
+            // Trigger client-side Purchase event (coordinated CAPI call also happens on server endpoint)
+            trackMetaEvent(
+                'Purchase',
+                {
+                    content_ids: cart.items.map((i) => i.productId),
+                    content_type: 'product',
+                    value: Number(cart.totalPrice),
+                    currency: 'USD',
+                    num_items: cart.items.reduce((acc, i) => acc + i.qty, 0),
+                },
+                {
+                    phone: phone.trim(),
+                },
+                purchaseEventId
+            );
+
             setIsConfirmed(true);
             toast.success('Order confirmed! We will contact you shortly.');
         } catch {

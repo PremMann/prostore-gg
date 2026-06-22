@@ -8,6 +8,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { LanguageProvider } from '@/components/catalog/language-context';
 import { CartProvider } from '@/components/cart/cart-context';
 import MobileCartDrawer from '@/components/cart/mobile-cart-drawer';
+import FacebookPixel from '@/components/analytics/facebook-pixel';
 
 const barlow = Barlow_Condensed({
   subsets: ["latin"],
@@ -44,6 +45,7 @@ export default function RootLayout({
               enableSystem
               disableTransitionOnChange
             >
+              <FacebookPixel />
               {children}
               <MobileCartDrawer />
               <Toaster />
